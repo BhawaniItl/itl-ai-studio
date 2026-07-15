@@ -1,0 +1,130 @@
+import type {
+  WorkspaceModule,
+  ChatThread,
+  PromptSuggestion,
+  Citation,
+} from "@/types";
+
+export const workspaceModules: WorkspaceModule[] = [
+  {
+    id: "income-tax",
+    slug: "income-tax",
+    name: "Income Tax",
+    icon: "Landmark",
+    description: "Statute, case law, circulars and notifications under the Income Tax Act.",
+    color: "#7A1025",
+    tools: [
+      { id: "ask", slug: "ask", name: "Ask Bot", icon: "MessagesSquare", description: "Conversational research." },
+      { id: "case-law", slug: "case-law", name: "Case Law Research", icon: "Scale", description: "Search & compare judgments." },
+      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Draft replies to notices." },
+      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Memos, opinions, submissions." },
+      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Summarize orders & judgments." },
+    ],
+  },
+  {
+    id: "gst",
+    slug: "gst",
+    name: "GST",
+    icon: "Receipt",
+    description: "CGST/SGST/IGST Acts, rules, notifications and rulings.",
+    color: "#B22234",
+    tools: [
+      { id: "ask", slug: "ask", name: "Ask Bot", icon: "MessagesSquare", description: "Conversational research." },
+      { id: "case-law", slug: "case-law", name: "Case Law Research", icon: "Scale", description: "AAR/AAAR & tribunal rulings." },
+      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Reply to SCN and orders." },
+      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Advance ruling applications." },
+      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Circular & ruling summaries." },
+    ],
+  },
+];
+
+const sampleCitations: Citation[] = [
+  { id: "c1", title: "CIT v. Vatika Township (P) Ltd.", type: "case", ref: "(2015) 1 SCC 1", snippet: "Retrospective operation of tax statutes — presumption against retrospectivity." },
+  { id: "c2", title: "Section 147, Income Tax Act, 1961", type: "act", ref: "s.147", snippet: "Income escaping assessment." },
+  { id: "c3", title: "CBDT Circular No. 549 dated 31.10.1989", type: "circular", ref: "Circular 549/1989" },
+];
+
+export const sampleThreads: ChatThread[] = [
+  {
+    id: "t1",
+    title: "Reassessment u/s 148 — limitation post 2021",
+    moduleId: "income-tax",
+    toolId: "ask",
+    updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    pinned: true,
+    tags: ["reassessment", "limitation"],
+    messages: [
+      { id: "m1", role: "user", content: "What is the limitation for reopening under s.148 after the 2021 Finance Act?", createdAt: new Date().toISOString() },
+      {
+        id: "m2",
+        role: "assistant",
+        createdAt: new Date().toISOString(),
+        content:
+`Under the amended regime effective **1 April 2021**, the limitation for issuing notice under Section 148 is:
+
+| Escaped income | Limitation |
+| --- | --- |
+| Below ₹50 lakh | **3 years** from end of the relevant AY |
+| ₹50 lakh or more | **10 years** from end of the relevant AY |
+
+Key points to note:
+
+1. The AO must first pass an order under **s.148A(d)** after conducting an enquiry under s.148A(a)–(c).
+2. The Supreme Court in *Union of India v. Ashish Agarwal* (2022) reconciled TOLA notices with the new regime.
+3. The extended 10-year window applies only where escaped income is represented in the form of an **asset**, expenditure or entry.
+
+Recommended next step: check whether the impugned notice complies with s.148A procedure and whether TOLA safeguards apply.`,
+        citations: sampleCitations,
+      },
+    ],
+  },
+  {
+    id: "t2",
+    title: "GST — ITC reversal on credit notes",
+    moduleId: "gst",
+    toolId: "ask",
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    tags: ["ITC", "credit-notes"],
+    messages: [],
+  },
+  {
+    id: "t3",
+    title: "Section 56(2)(x) — gift from HUF to member",
+    moduleId: "income-tax",
+    toolId: "ask",
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
+    favorite: true,
+    folder: "Client — Sharma & Sons",
+    messages: [],
+  },
+  {
+    id: "t4",
+    title: "Draft reply — s.143(2) scrutiny notice",
+    moduleId: "income-tax",
+    toolId: "notice-reply",
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    folder: "Client — Sharma & Sons",
+    messages: [],
+  },
+  {
+    id: "t5",
+    title: "AAR summary — solar EPC works contract",
+    moduleId: "gst",
+    toolId: "summarize",
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    messages: [],
+  },
+];
+
+export const promptSuggestions: PromptSuggestion[] = [
+  { id: "p1", moduleId: "income-tax", title: "Reassessment limitation", prompt: "Explain the limitation for notice u/s 148 after Finance Act 2021, with case law." },
+  { id: "p2", moduleId: "income-tax", title: "Presumptive taxation", prompt: "Summarize eligibility and computation under s.44AD, 44ADA and 44AE with examples." },
+  { id: "p3", moduleId: "gst", title: "ITC on CSR expenses", prompt: "Is input tax credit available on CSR expenditure post Finance Act 2023? Cite rulings." },
+  { id: "p4", moduleId: "gst", title: "E-invoicing threshold", prompt: "What is the current turnover threshold for e-invoicing and who is exempt?" },
+];
+
+export const chatFolders = [
+  { id: "f1", name: "Client — Sharma & Sons", count: 12 },
+  { id: "f2", name: "Research — Reassessment", count: 8 },
+  { id: "f3", name: "GST audits FY24", count: 5 },
+];
