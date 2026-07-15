@@ -13,9 +13,11 @@ import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RefundRouteImport } from './routes/refund'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as OtpRouteImport } from './routes/otp'
@@ -30,6 +32,17 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminThemeRouteImport } from './routes/admin.theme'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
+import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
+import { Route as AdminSeoRouteImport } from './routes/admin.seo'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminMediaRouteImport } from './routes/admin.media'
+import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as AdminKnowledgeRouteImport } from './routes/admin.knowledge'
+import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAiRouteImport } from './routes/admin.ai'
 
 const WorkspaceRoute = WorkspaceRouteImport.update({
   id: '/workspace',
@@ -51,6 +64,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -64,6 +82,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const RefundRoute = RefundRouteImport.update({
   id: '/refund',
   path: '/refund',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -136,6 +159,61 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminThemeRoute = AdminThemeRouteImport.update({
+  id: '/theme',
+  path: '/theme',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscriptionsRoute = AdminSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSeoRoute = AdminSeoRouteImport.update({
+  id: '/seo',
+  path: '/seo',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMediaRoute = AdminMediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLogsRoute = AdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKnowledgeRoute = AdminKnowledgeRouteImport.update({
+  id: '/knowledge',
+  path: '/knowledge',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContentRoute = AdminContentRouteImport.update({
+  id: '/content',
+  path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAiRoute = AdminAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -151,13 +229,26 @@ export interface FileRoutesByFullPath {
   '/otp': typeof OtpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/welcome': typeof WelcomeRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/ai': typeof AdminAiRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/knowledge': typeof AdminKnowledgeRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRoutesByTo {
@@ -174,13 +265,26 @@ export interface FileRoutesByTo {
   '/otp': typeof OtpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/welcome': typeof WelcomeRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/ai': typeof AdminAiRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/knowledge': typeof AdminKnowledgeRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRoutesById {
@@ -198,13 +302,26 @@ export interface FileRoutesById {
   '/otp': typeof OtpRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/refund': typeof RefundRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/verify-email': typeof VerifyEmailRoute
   '/welcome': typeof WelcomeRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/ai': typeof AdminAiRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/content': typeof AdminContentRoute
+  '/admin/knowledge': typeof AdminKnowledgeRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/media': typeof AdminMediaRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/admin/seo': typeof AdminSeoRoute
+  '/admin/subscriptions': typeof AdminSubscriptionsRoute
+  '/admin/system': typeof AdminSystemRoute
+  '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRouteTypes {
@@ -223,13 +340,26 @@ export interface FileRouteTypes {
     | '/otp'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/refund'
     | '/register'
     | '/reset-password'
+    | '/settings'
     | '/terms'
     | '/verify-email'
     | '/welcome'
     | '/workspace'
+    | '/admin/ai'
+    | '/admin/analytics'
+    | '/admin/content'
+    | '/admin/knowledge'
+    | '/admin/logs'
+    | '/admin/media'
+    | '/admin/roles'
+    | '/admin/seo'
+    | '/admin/subscriptions'
+    | '/admin/system'
+    | '/admin/theme'
     | '/admin/users'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -246,13 +376,26 @@ export interface FileRouteTypes {
     | '/otp'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/refund'
     | '/register'
     | '/reset-password'
+    | '/settings'
     | '/terms'
     | '/verify-email'
     | '/welcome'
     | '/workspace'
+    | '/admin/ai'
+    | '/admin/analytics'
+    | '/admin/content'
+    | '/admin/knowledge'
+    | '/admin/logs'
+    | '/admin/media'
+    | '/admin/roles'
+    | '/admin/seo'
+    | '/admin/subscriptions'
+    | '/admin/system'
+    | '/admin/theme'
     | '/admin/users'
   id:
     | '__root__'
@@ -269,13 +412,26 @@ export interface FileRouteTypes {
     | '/otp'
     | '/pricing'
     | '/privacy'
+    | '/profile'
     | '/refund'
     | '/register'
     | '/reset-password'
+    | '/settings'
     | '/terms'
     | '/verify-email'
     | '/welcome'
     | '/workspace'
+    | '/admin/ai'
+    | '/admin/analytics'
+    | '/admin/content'
+    | '/admin/knowledge'
+    | '/admin/logs'
+    | '/admin/media'
+    | '/admin/roles'
+    | '/admin/seo'
+    | '/admin/subscriptions'
+    | '/admin/system'
+    | '/admin/theme'
     | '/admin/users'
   fileRoutesById: FileRoutesById
 }
@@ -293,9 +449,11 @@ export interface RootRouteChildren {
   OtpRoute: typeof OtpRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   RefundRoute: typeof RefundRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -332,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -351,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/refund'
       fullPath: '/refund'
       preLoaderRoute: typeof RefundRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -451,14 +623,113 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/theme': {
+      id: '/admin/theme'
+      path: '/theme'
+      fullPath: '/admin/theme'
+      preLoaderRoute: typeof AdminThemeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscriptions': {
+      id: '/admin/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/admin/subscriptions'
+      preLoaderRoute: typeof AdminSubscriptionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/seo': {
+      id: '/admin/seo'
+      path: '/seo'
+      fullPath: '/admin/seo'
+      preLoaderRoute: typeof AdminSeoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/media': {
+      id: '/admin/media'
+      path: '/media'
+      fullPath: '/admin/media'
+      preLoaderRoute: typeof AdminMediaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/knowledge': {
+      id: '/admin/knowledge'
+      path: '/knowledge'
+      fullPath: '/admin/knowledge'
+      preLoaderRoute: typeof AdminKnowledgeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/content': {
+      id: '/admin/content'
+      path: '/content'
+      fullPath: '/admin/content'
+      preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ai': {
+      id: '/admin/ai'
+      path: '/ai'
+      fullPath: '/admin/ai'
+      preLoaderRoute: typeof AdminAiRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAiRoute: typeof AdminAiRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminContentRoute: typeof AdminContentRoute
+  AdminKnowledgeRoute: typeof AdminKnowledgeRoute
+  AdminLogsRoute: typeof AdminLogsRoute
+  AdminMediaRoute: typeof AdminMediaRoute
+  AdminRolesRoute: typeof AdminRolesRoute
+  AdminSeoRoute: typeof AdminSeoRoute
+  AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
+  AdminSystemRoute: typeof AdminSystemRoute
+  AdminThemeRoute: typeof AdminThemeRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAiRoute: AdminAiRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminContentRoute: AdminContentRoute,
+  AdminKnowledgeRoute: AdminKnowledgeRoute,
+  AdminLogsRoute: AdminLogsRoute,
+  AdminMediaRoute: AdminMediaRoute,
+  AdminRolesRoute: AdminRolesRoute,
+  AdminSeoRoute: AdminSeoRoute,
+  AdminSubscriptionsRoute: AdminSubscriptionsRoute,
+  AdminSystemRoute: AdminSystemRoute,
+  AdminThemeRoute: AdminThemeRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
 
@@ -478,9 +749,11 @@ const rootRouteChildren: RootRouteChildren = {
   OtpRoute: OtpRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   RefundRoute: RefundRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   WelcomeRoute: WelcomeRoute,
