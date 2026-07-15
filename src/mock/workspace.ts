@@ -44,21 +44,22 @@ const sampleCitations: Citation[] = [
   { id: "c3", title: "CBDT Circular No. 549 dated 31.10.1989", type: "circular", ref: "Circular 549/1989" },
 ];
 
+// Static timestamps to avoid SSR/hydration mismatches from Date.now() at module scope.
 export const sampleThreads: ChatThread[] = [
   {
     id: "t1",
     title: "Reassessment u/s 148 — limitation post 2021",
     moduleId: "income-tax",
     toolId: "ask",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    updatedAt: "2026-07-15T05:00:00.000Z",
     pinned: true,
     tags: ["reassessment", "limitation"],
     messages: [
-      { id: "m1", role: "user", content: "What is the limitation for reopening under s.148 after the 2021 Finance Act?", createdAt: new Date().toISOString() },
+      { id: "m1", role: "user", content: "What is the limitation for reopening under s.148 after the 2021 Finance Act?", createdAt: "2026-07-15T05:00:00.000Z" },
       {
         id: "m2",
         role: "assistant",
-        createdAt: new Date().toISOString(),
+        createdAt: "2026-07-15T05:00:05.000Z",
         content:
 `Under the amended regime effective **1 April 2021**, the limitation for issuing notice under Section 148 is:
 
@@ -78,42 +79,10 @@ Recommended next step: check whether the impugned notice complies with s.148A pr
       },
     ],
   },
-  {
-    id: "t2",
-    title: "GST — ITC reversal on credit notes",
-    moduleId: "gst",
-    toolId: "ask",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-    tags: ["ITC", "credit-notes"],
-    messages: [],
-  },
-  {
-    id: "t3",
-    title: "Section 56(2)(x) — gift from HUF to member",
-    moduleId: "income-tax",
-    toolId: "ask",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
-    favorite: true,
-    folder: "Client — Sharma & Sons",
-    messages: [],
-  },
-  {
-    id: "t4",
-    title: "Draft reply — s.143(2) scrutiny notice",
-    moduleId: "income-tax",
-    toolId: "notice-reply",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    folder: "Client — Sharma & Sons",
-    messages: [],
-  },
-  {
-    id: "t5",
-    title: "AAR summary — solar EPC works contract",
-    moduleId: "gst",
-    toolId: "summarize",
-    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-    messages: [],
-  },
+  { id: "t2", title: "GST — ITC reversal on credit notes", moduleId: "gst", toolId: "ask", updatedAt: "2026-07-14T22:00:00.000Z", tags: ["ITC", "credit-notes"], messages: [] },
+  { id: "t3", title: "Section 56(2)(x) — gift from HUF to member", moduleId: "income-tax", toolId: "ask", updatedAt: "2026-07-13T22:00:00.000Z", favorite: true, folder: "Client — Sharma & Sons", messages: [] },
+  { id: "t4", title: "Draft reply — s.143(2) scrutiny notice", moduleId: "income-tax", toolId: "notice-reply", updatedAt: "2026-07-12T22:00:00.000Z", folder: "Client — Sharma & Sons", messages: [] },
+  { id: "t5", title: "AAR summary — solar EPC works contract", moduleId: "gst", toolId: "summarize", updatedAt: "2026-07-11T22:00:00.000Z", messages: [] },
 ];
 
 export const promptSuggestions: PromptSuggestion[] = [
