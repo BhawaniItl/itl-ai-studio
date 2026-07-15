@@ -1,0 +1,41 @@
+import type { AdminMetric, AdminUser } from "@/types";
+
+export const adminMetrics: AdminMetric[] = [
+  { key: "mrr", label: "MRR", value: "₹18.4L", delta: 12.6, trend: [8, 10, 9, 12, 14, 13, 16, 18] },
+  { key: "users", label: "Active users", value: "3,284", delta: 8.1, trend: [1200, 1500, 1800, 2100, 2400, 2700, 3000, 3284] },
+  { key: "queries", label: "Queries / day", value: "42,910", delta: 22.4, trend: [10, 14, 18, 22, 26, 30, 36, 42] },
+  { key: "csat", label: "CSAT", value: "4.8 / 5", delta: 1.2, trend: [4.4, 4.5, 4.5, 4.6, 4.7, 4.7, 4.8, 4.8] },
+];
+
+export const adminUsers: AdminUser[] = [
+  { id: "u1", name: "CA Arvind Menon", email: "arvind@menonca.in", role: "admin", plan: "enterprise", status: "active", joinedAt: "2025-11-04" },
+  { id: "u2", name: "Adv. Priya Ranganathan", email: "priya@advpr.in", role: "user", plan: "pro", status: "active", joinedAt: "2026-01-12" },
+  { id: "u3", name: "CA Rohan Shah", email: "rohan@shahco.com", role: "editor", plan: "pro", status: "active", joinedAt: "2026-02-18" },
+  { id: "u4", name: "Neha Kapoor", email: "neha@kapoortax.in", role: "user", plan: "free", status: "invited", joinedAt: "2026-06-01" },
+  { id: "u5", name: "CA Suresh Iyer", email: "suresh@iyerandco.in", role: "user", plan: "pro", status: "suspended", joinedAt: "2025-08-22" },
+  { id: "u6", name: "Vikram Desai", email: "vikram@desailegal.com", role: "user", plan: "enterprise", status: "active", joinedAt: "2026-03-04" },
+  { id: "u7", name: "CA Meera Nair", email: "meera@nairca.in", role: "user", plan: "pro", status: "active", joinedAt: "2026-04-11" },
+  { id: "u8", name: "Karan Malhotra", email: "karan@kmadvisors.com", role: "user", plan: "free", status: "active", joinedAt: "2026-05-30" },
+];
+
+export const adminNav = [
+  { section: "Overview", items: [
+    { label: "Dashboard", to: "/admin", icon: "LayoutDashboard" },
+    { label: "Analytics", to: "/admin/analytics", icon: "BarChart3" },
+  ]},
+  { section: "Management", items: [
+    { label: "Users", to: "/admin/users", icon: "Users" },
+    { label: "Subscriptions", to: "/admin/subscriptions", icon: "CreditCard" },
+    { label: "Content", to: "/admin/content", icon: "FileText" },
+    { label: "Knowledge Base", to: "/admin/knowledge", icon: "BookOpen" },
+    { label: "Media Library", to: "/admin/media", icon: "Image" },
+  ]},
+  { section: "Platform", items: [
+    { label: "AI Settings", to: "/admin/ai", icon: "Sparkles" },
+    { label: "SEO", to: "/admin/seo", icon: "Search" },
+    { label: "Theme", to: "/admin/theme", icon: "Palette" },
+    { label: "Roles & Permissions", to: "/admin/roles", icon: "ShieldCheck" },
+    { label: "System", to: "/admin/system", icon: "Settings" },
+    { label: "Logs", to: "/admin/logs", icon: "ScrollText" },
+  ]},
+];

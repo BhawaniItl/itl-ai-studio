@@ -1,24 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PublicLayout } from "@/layouts/PublicLayout";
+import {
+  Hero,
+  FeaturesGrid,
+  WorkflowSection,
+  Testimonials,
+  CtaBanner,
+} from "@/features/landing/sections";
+import { useHome } from "@/hooks";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: Home,
+  head: () => ({
+    meta: [
+      { title: "ITL AI — Income Tax & GST research, drafting and case law" },
+      {
+        name: "description",
+        content:
+          "Purpose-built AI workspace for Chartered Accountants, advocates and tax teams. Grounded citations, notice drafting, case law summaries.",
+      },
+      { property: "og:title", content: "ITL AI — The AI copilot for Indian tax professionals" },
+      {
+        property: "og:description",
+        content: "Research Income Tax & GST, draft replies, summarize orders — with verifiable citations.",
+      },
+    ],
+  }),
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function Home() {
+  const { data, isLoading } = useHome();
+  if (isLoading || !data) {
+    return (
+      <PublicLayout>
+        <div className="mx-auto max-w-7xl px-6 py-24">
+          <div className="h-96 animate-pulse rounded-2xl bg-secondary/60" />
+        </div>
+      </PublicLayout>
+    );
+  }
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <PublicLayout>
+      <Hero data={data.hero} />
+      <FeaturesGrid items={data.features} />
+      <WorkflowSection steps={data.workflow} />
+      <Testimonials items={data.testimonials} />
+      <CtaBanner />
+    </PublicLayout>
   );
 }
