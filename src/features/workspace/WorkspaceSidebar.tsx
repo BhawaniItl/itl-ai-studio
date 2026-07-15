@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
 import {
   Plus,
   Search,
@@ -7,27 +6,23 @@ import {
   Star,
   MoreHorizontal,
   Folder,
-  Sparkles,
   Settings,
   LogOut,
   ChevronsLeft,
 } from "lucide-react";
 import { useState } from "react";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import { Logo } from "@/components/common/Logo";
 import { Icon } from "@/components/common/Icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useChatThreads, useChatFolders, useWorkspaceModules } from "@/hooks";
-import { useWorkspaceStore, useSidebarStore } from "@/store";
-
-dayjs.extend(relativeTime);
+import { useChatFolders, useWorkspaceModules } from "@/hooks";
+import { useWorkspaceStore, useSidebarStore, useChatStore } from "@/store";
 
 export function WorkspaceSidebar() {
   const [query, setQuery] = useState("");
-  const { data: threads } = useChatThreads();
+  const threads = useChatStore((s) => s.threads);
   const { data: folders } = useChatFolders();
   const { data: modules } = useWorkspaceModules();
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
@@ -173,7 +168,7 @@ function ThreadGroup({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium">{t.title}</p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                  {dayjs(t.updatedAt).fromNow()}
+                  {dayjs(t.updatedAt).format("MMM D, HH:mm")}
                 </p>
               </div>
               <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
