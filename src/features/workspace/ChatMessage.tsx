@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Download, RefreshCw, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,30 +32,30 @@ export function ChatMessageBubble({ message }: { message: ChatMessage }) {
           {isUser ? (
             <p>{message.content}</p>
           ) : (
-            <div className="prose prose-sm max-w-none prose-headings:font-semibold prose-headings:tracking-tight prose-p:my-2 prose-table:my-3 prose-th:bg-muted prose-th:text-foreground prose-td:border prose-td:border-border prose-th:border prose-th:border-border prose-td:p-2 prose-th:p-2 prose-code:rounded prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:text-[13px] prose-code:before:content-[''] prose-code:after:content-['']">
+            <div className="markdown-body space-y-2 text-[15px] leading-[1.7]">
               <ReactMarkdown
                 components={{
-                  code({ inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    if (!inline && match) {
-                      return (
-                        <SyntaxHighlighter
-                          style={oneLight}
-                          language={match[1]}
-                          PreTag="div"
-                          customStyle={{
-                            borderRadius: "0.75rem",
-                            fontSize: "13px",
-                            padding: "0.9rem",
-                            border: "1px solid var(--color-border)",
-                          }}
-                        >
-                          {String(children).replace(/\n$/, "")}
-                        </SyntaxHighlighter>
-                      );
-                    }
-                    return <code className={className} {...props}>{children}</code>;
-                  },
+                  h1: (p) => <h1 className="text-lg font-semibold tracking-tight" {...p} />,
+                  h2: (p) => <h2 className="text-base font-semibold tracking-tight" {...p} />,
+                  p: (p) => <p className="my-2" {...p} />,
+                  ul: (p) => <ul className="my-2 list-disc pl-5 space-y-1" {...p} />,
+                  ol: (p) => <ol className="my-2 list-decimal pl-5 space-y-1" {...p} />,
+                  strong: (p) => <strong className="font-semibold text-foreground" {...p} />,
+                  em: (p) => <em className="italic" {...p} />,
+                  code: (p) => (
+                    <code className="rounded bg-muted px-1 py-0.5 font-mono text-[13px]" {...p} />
+                  ),
+                  pre: (p) => (
+                    <pre className="my-3 overflow-x-auto rounded-xl border border-border bg-muted p-3 font-mono text-[13px] leading-relaxed" {...p} />
+                  ),
+                  table: (p) => (
+                    <div className="my-3 overflow-x-auto rounded-xl border border-border">
+                      <table className="w-full text-left text-sm" {...p} />
+                    </div>
+                  ),
+                  th: (p) => <th className="border-b border-border bg-muted px-3 py-2 font-semibold" {...p} />,
+                  td: (p) => <td className="border-b border-border px-3 py-2 last:border-b-0" {...p} />,
+                  a: (p) => <a className="text-primary underline-offset-2 hover:underline" {...p} />,
                 }}
               >
                 {message.content}
