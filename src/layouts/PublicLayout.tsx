@@ -11,15 +11,17 @@ import { useThemeStore } from "@/store/themeStore";
 import { cn } from "@/lib/utils";
 
 function ThemeToggle() {
-  // Best-effort toggle; falls back gracefully if store shape differs
-  const store = useThemeStore() as unknown as { theme?: string; toggle?: () => void; setTheme?: (t: string) => void };
-  const isDark = store.theme === "dark";
-  const toggle = () => {
-    if (store.toggle) store.toggle();
-    else if (store.setTheme) store.setTheme(isDark ? "light" : "dark");
-  };
+  const mode = useThemeStore((s) => s.theme.mode);
+  const setMode = useThemeStore((s) => s.setMode);
+  const isDark = mode === "dark";
   return (
-    <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme" className="h-9 w-9">
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setMode(isDark ? "light" : "dark")}
+      aria-label="Toggle theme"
+      className="h-9 w-9"
+    >
       {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>
   );
