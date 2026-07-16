@@ -2,8 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import {
   Hero,
-  FeaturesGrid,
+  LogoStrip,
+  ProblemSection,
+  SolutionSection,
+  WorkspaceShowcase,
+  ProductShowcaseSection,
+  ComparisonSection,
   WorkflowSection,
+  NoticeReplyFlow,
+  TrustSection,
   Testimonials,
   CtaBanner,
 } from "@/features/landing/sections";
@@ -24,6 +31,8 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: "Research Income Tax & GST, draft replies, summarize orders — with verifiable citations.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
@@ -42,8 +51,15 @@ function Home() {
   return (
     <PublicLayout>
       <Hero data={data.hero} />
-      <FeaturesGrid items={data.features} />
+      <LogoStrip items={data.logos} />
+      <ProblemSection items={data.painPoints} />
+      <SolutionSection steps={data.solutionSteps} />
+      <WorkspaceShowcase />
+      <ProductShowcaseSection items={data.showcases} />
+      <ComparisonSection rows={data.comparison} />
       <WorkflowSection steps={data.workflow} />
+      <NoticeReplyFlow steps={data.noticeReplyFlow} />
+      <TrustSection sources={data.trustSources} />
       <Testimonials items={data.testimonials} />
       <CtaBanner />
     </PublicLayout>

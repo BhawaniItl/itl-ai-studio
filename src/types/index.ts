@@ -7,6 +7,7 @@ export interface HeroData {
   secondaryCta: { label: string; to: string };
   stats: { label: string; value: string }[];
   logos: string[];
+  typewriter?: string[];
 }
 
 export interface FeatureItem {
@@ -26,18 +27,21 @@ export interface Testimonial {
 export interface FAQItem {
   q: string;
   a: string;
+  category?: string;
 }
 
 export interface PricingPlan {
   id: string;
   name: string;
   price: number;
+  yearlyPrice?: number;
   period: "monthly" | "yearly";
   currency: string;
   description: string;
   featured?: boolean;
   cta: string;
   features: string[];
+  badge?: string;
 }
 
 export interface ContactInfo {
@@ -131,5 +135,44 @@ export interface LegalDoc {
   slug: string;
   title: string;
   updatedAt: string;
+  readingTime?: string;
   sections: { heading: string; body: string }[];
+}
+
+/* Public marketing extensions */
+
+export interface PainPoint {
+  icon: string;
+  title: string;
+  body: string;
+}
+
+export interface ProductShowcase {
+  id: string;
+  eyebrow: string;
+  title: string;
+  body: string;
+  bullets: string[];
+  icon: string;
+  cta: { label: string; to: string };
+  demo: "chat" | "research" | "notice" | "draft" | "summarize";
+}
+
+export interface ComparisonRow {
+  capability: string;
+  manual: string | boolean;
+  google: string | boolean;
+  chatgpt: string | boolean;
+  itl: string | boolean;
+}
+
+export interface TrustSource {
+  icon: string;
+  name: string;
+  count: string;
+}
+
+export interface LogoItem {
+  name: string;
+  kind?: "firm" | "government" | "source";
 }

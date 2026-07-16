@@ -5,7 +5,7 @@ export interface NavItem {
 }
 
 export const publicNav: NavItem[] = [
-  { label: "Home", to: "/" },
+  { label: "Product", to: "/#product" },
   { label: "Workspace", to: "/workspace" },
   { label: "Pricing", to: "/pricing" },
   { label: "About", to: "/about" },
@@ -16,13 +16,23 @@ export const publicNav: NavItem[] = [
 export const footerNav = {
   Product: [
     { label: "Workspace", to: "/workspace" },
+    { label: "Ask Bot", to: "/#ask" },
+    { label: "Case Law Research", to: "/#research" },
+    { label: "Notice Reply", to: "/#notice" },
+    { label: "Summarizer", to: "/#summarize" },
     { label: "Pricing", to: "/pricing" },
-    { label: "Admin Demo", to: "/admin" },
   ],
-  Company: [
+  Solutions: [
+    { label: "For CAs", to: "/#product" },
+    { label: "For Advocates", to: "/#product" },
+    { label: "For Firms", to: "/pricing" },
+    { label: "For In-house Teams", to: "/pricing" },
+  ],
+  Resources: [
+    { label: "FAQ", to: "/faq" },
     { label: "About", to: "/about" },
     { label: "Contact", to: "/contact" },
-    { label: "FAQ", to: "/faq" },
+    { label: "Admin Demo", to: "/admin" },
   ],
   Legal: [
     { label: "Privacy Policy", to: "/privacy" },
