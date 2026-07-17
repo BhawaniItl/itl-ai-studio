@@ -5,10 +5,15 @@ import { cn } from "@/lib/utils";
 import { useAdminNav } from "@/hooks";
 import { Button } from "@/components/ui/button";
 import { Bell, Search } from "lucide-react";
+import { useCommandStore } from "@/store/commandStore";
+import { useNotificationStore } from "@/store/notificationStore";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: nav } = useAdminNav();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const openPalette = useCommandStore((s) => s.setOpen);
+  const openDrawer = useNotificationStore((s) => s.setDrawerOpen);
+  const unread = useNotificationStore((s) => s.items.filter((n) => !n.read).length);
 
   return (
     <div className="grid min-h-screen grid-cols-[260px_1fr] bg-background">
