@@ -31,16 +31,27 @@ import { Route as CancellationRouteImport } from './routes/cancellation'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminWorkspaceSettingsRouteImport } from './routes/admin.workspace-settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminThemeRouteImport } from './routes/admin.theme'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
 import { Route as AdminSeoRouteImport } from './routes/admin.seo'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AdminPromptTemplatesRouteImport } from './routes/admin.prompt-templates'
+import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminPagesRouteImport } from './routes/admin.pages'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminNavigationRouteImport } from './routes/admin.navigation'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminKnowledgeRouteImport } from './routes/admin.knowledge'
+import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
+import { Route as AdminEmailTemplatesRouteImport } from './routes/admin.email-templates'
+import { Route as AdminDocTemplatesRouteImport } from './routes/admin.doc-templates'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
+import { Route as AdminCmsRouteImport } from './routes/admin.cms'
+import { Route as AdminAuditRouteImport } from './routes/admin.audit'
 import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
 
@@ -154,6 +165,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminWorkspaceSettingsRoute = AdminWorkspaceSettingsRouteImport.update({
+  id: '/workspace-settings',
+  path: '/workspace-settings',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -184,6 +200,31 @@ const AdminRolesRoute = AdminRolesRouteImport.update({
   path: '/roles',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPromptTemplatesRoute = AdminPromptTemplatesRouteImport.update({
+  id: '/prompt-templates',
+  path: '/prompt-templates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
+  id: '/permissions',
+  path: '/permissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPagesRoute = AdminPagesRouteImport.update({
+  id: '/pages',
+  path: '/pages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNavigationRoute = AdminNavigationRouteImport.update({
+  id: '/navigation',
+  path: '/navigation',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMediaRoute = AdminMediaRouteImport.update({
   id: '/media',
   path: '/media',
@@ -199,9 +240,34 @@ const AdminKnowledgeRoute = AdminKnowledgeRouteImport.update({
   path: '/knowledge',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmailTemplatesRoute = AdminEmailTemplatesRouteImport.update({
+  id: '/email-templates',
+  path: '/email-templates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDocTemplatesRoute = AdminDocTemplatesRouteImport.update({
+  id: '/doc-templates',
+  path: '/doc-templates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminContentRoute = AdminContentRouteImport.update({
   id: '/content',
   path: '/content',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCmsRoute = AdminCmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAuditRoute = AdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
@@ -240,16 +306,27 @@ export interface FileRoutesByFullPath {
   '/workspace': typeof WorkspaceRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/cms': typeof AdminCmsRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/doc-templates': typeof AdminDocTemplatesRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/admin/knowledge': typeof AdminKnowledgeRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/prompt-templates': typeof AdminPromptTemplatesRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -276,16 +353,27 @@ export interface FileRoutesByTo {
   '/workspace': typeof WorkspaceRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/cms': typeof AdminCmsRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/doc-templates': typeof AdminDocTemplatesRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/admin/knowledge': typeof AdminKnowledgeRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/prompt-templates': typeof AdminPromptTemplatesRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -313,16 +401,27 @@ export interface FileRoutesById {
   '/workspace': typeof WorkspaceRoute
   '/admin/ai': typeof AdminAiRoute
   '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/audit': typeof AdminAuditRoute
+  '/admin/cms': typeof AdminCmsRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/doc-templates': typeof AdminDocTemplatesRoute
+  '/admin/email-templates': typeof AdminEmailTemplatesRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/admin/knowledge': typeof AdminKnowledgeRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/media': typeof AdminMediaRoute
+  '/admin/navigation': typeof AdminNavigationRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/pages': typeof AdminPagesRoute
+  '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/prompt-templates': typeof AdminPromptTemplatesRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/seo': typeof AdminSeoRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -351,16 +450,27 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/admin/ai'
     | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/cms'
     | '/admin/content'
+    | '/admin/doc-templates'
+    | '/admin/email-templates'
+    | '/admin/features'
     | '/admin/knowledge'
     | '/admin/logs'
     | '/admin/media'
+    | '/admin/navigation'
+    | '/admin/notifications'
+    | '/admin/pages'
+    | '/admin/permissions'
+    | '/admin/prompt-templates'
     | '/admin/roles'
     | '/admin/seo'
     | '/admin/subscriptions'
     | '/admin/system'
     | '/admin/theme'
     | '/admin/users'
+    | '/admin/workspace-settings'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -387,16 +497,27 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/admin/ai'
     | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/cms'
     | '/admin/content'
+    | '/admin/doc-templates'
+    | '/admin/email-templates'
+    | '/admin/features'
     | '/admin/knowledge'
     | '/admin/logs'
     | '/admin/media'
+    | '/admin/navigation'
+    | '/admin/notifications'
+    | '/admin/pages'
+    | '/admin/permissions'
+    | '/admin/prompt-templates'
     | '/admin/roles'
     | '/admin/seo'
     | '/admin/subscriptions'
     | '/admin/system'
     | '/admin/theme'
     | '/admin/users'
+    | '/admin/workspace-settings'
   id:
     | '__root__'
     | '/'
@@ -423,16 +544,27 @@ export interface FileRouteTypes {
     | '/workspace'
     | '/admin/ai'
     | '/admin/analytics'
+    | '/admin/audit'
+    | '/admin/cms'
     | '/admin/content'
+    | '/admin/doc-templates'
+    | '/admin/email-templates'
+    | '/admin/features'
     | '/admin/knowledge'
     | '/admin/logs'
     | '/admin/media'
+    | '/admin/navigation'
+    | '/admin/notifications'
+    | '/admin/pages'
+    | '/admin/permissions'
+    | '/admin/prompt-templates'
     | '/admin/roles'
     | '/admin/seo'
     | '/admin/subscriptions'
     | '/admin/system'
     | '/admin/theme'
     | '/admin/users'
+    | '/admin/workspace-settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -616,6 +748,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/workspace-settings': {
+      id: '/admin/workspace-settings'
+      path: '/workspace-settings'
+      fullPath: '/admin/workspace-settings'
+      preLoaderRoute: typeof AdminWorkspaceSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/users'
@@ -658,6 +797,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRolesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/prompt-templates': {
+      id: '/admin/prompt-templates'
+      path: '/prompt-templates'
+      fullPath: '/admin/prompt-templates'
+      preLoaderRoute: typeof AdminPromptTemplatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/permissions': {
+      id: '/admin/permissions'
+      path: '/permissions'
+      fullPath: '/admin/permissions'
+      preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pages': {
+      id: '/admin/pages'
+      path: '/pages'
+      fullPath: '/admin/pages'
+      preLoaderRoute: typeof AdminPagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/navigation': {
+      id: '/admin/navigation'
+      path: '/navigation'
+      fullPath: '/admin/navigation'
+      preLoaderRoute: typeof AdminNavigationRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/media': {
       id: '/admin/media'
       path: '/media'
@@ -679,11 +853,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKnowledgeRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/features': {
+      id: '/admin/features'
+      path: '/features'
+      fullPath: '/admin/features'
+      preLoaderRoute: typeof AdminFeaturesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/email-templates': {
+      id: '/admin/email-templates'
+      path: '/email-templates'
+      fullPath: '/admin/email-templates'
+      preLoaderRoute: typeof AdminEmailTemplatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/doc-templates': {
+      id: '/admin/doc-templates'
+      path: '/doc-templates'
+      fullPath: '/admin/doc-templates'
+      preLoaderRoute: typeof AdminDocTemplatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/content': {
       id: '/admin/content'
       path: '/content'
       fullPath: '/admin/content'
       preLoaderRoute: typeof AdminContentRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/cms': {
+      id: '/admin/cms'
+      path: '/cms'
+      fullPath: '/admin/cms'
+      preLoaderRoute: typeof AdminCmsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/audit': {
+      id: '/admin/audit'
+      path: '/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AdminAuditRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/analytics': {
@@ -706,31 +915,53 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminAiRoute: typeof AdminAiRoute
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAuditRoute: typeof AdminAuditRoute
+  AdminCmsRoute: typeof AdminCmsRoute
   AdminContentRoute: typeof AdminContentRoute
+  AdminDocTemplatesRoute: typeof AdminDocTemplatesRoute
+  AdminEmailTemplatesRoute: typeof AdminEmailTemplatesRoute
+  AdminFeaturesRoute: typeof AdminFeaturesRoute
   AdminKnowledgeRoute: typeof AdminKnowledgeRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMediaRoute: typeof AdminMediaRoute
+  AdminNavigationRoute: typeof AdminNavigationRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminPagesRoute: typeof AdminPagesRoute
+  AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminPromptTemplatesRoute: typeof AdminPromptTemplatesRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminSeoRoute: typeof AdminSeoRoute
   AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminThemeRoute: typeof AdminThemeRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminWorkspaceSettingsRoute: typeof AdminWorkspaceSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAiRoute: AdminAiRoute,
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAuditRoute: AdminAuditRoute,
+  AdminCmsRoute: AdminCmsRoute,
   AdminContentRoute: AdminContentRoute,
+  AdminDocTemplatesRoute: AdminDocTemplatesRoute,
+  AdminEmailTemplatesRoute: AdminEmailTemplatesRoute,
+  AdminFeaturesRoute: AdminFeaturesRoute,
   AdminKnowledgeRoute: AdminKnowledgeRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMediaRoute: AdminMediaRoute,
+  AdminNavigationRoute: AdminNavigationRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminPagesRoute: AdminPagesRoute,
+  AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminPromptTemplatesRoute: AdminPromptTemplatesRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminSeoRoute: AdminSeoRoute,
   AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminThemeRoute: AdminThemeRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminWorkspaceSettingsRoute: AdminWorkspaceSettingsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
