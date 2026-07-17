@@ -64,11 +64,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={() => openPalette(true)}>
               <Search className="h-4 w-4" /> <span className="hidden sm:inline">Search</span>
               <kbd className="ml-1 hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono sm:inline">⌘K</kbd>
             </Button>
-            <Button variant="ghost" size="icon"><Bell className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => openDrawer(true)} className="relative">
+              <Bell className="h-4 w-4" />
+              {unread > 0 && (
+                <span className="absolute right-1.5 top-1.5 grid h-4 min-w-[16px] place-items-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                  {unread}
+                </span>
+              )}
+            </Button>
             <div className="h-8 w-8 rounded-full gradient-primary" />
           </div>
         </header>
