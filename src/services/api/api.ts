@@ -1,6 +1,6 @@
 /**
  * Central networking layer.
- * Currently a scaffold with interceptors, retry, refresh-token, and error-handling
+ * Scaffold with interceptors, retry, refresh-token, and error-handling
  * placeholders. Services return mock data in dev; replace only the service
  * implementation to switch to a real backend.
  */
@@ -26,7 +26,6 @@ function getAuthToken(): string | null {
 }
 
 async function refreshAuthToken(): Promise<string | null> {
-  // Placeholder — wire to backend `/auth/refresh` later.
   return null;
 }
 
@@ -47,8 +46,6 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
     (res) => res,
     async (error: AxiosError) => {
       const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-
-      // 401 → attempt refresh once.
       if (error.response?.status === 401 && original && !original._retry) {
         original._retry = true;
         const fresh = await refreshAuthToken();
@@ -57,10 +54,6 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
           return instance.request(original);
         }
       }
-
-      // Global error toast placeholder — wire to sonner later.
-      // toast.error(getErrorMessage(error));
-
       return Promise.reject(error);
     },
   );
@@ -70,35 +63,134 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
 
 export const api = createApi();
 
-/** Simulate a mock async response — replace with real API calls incrementally. */
 export function mockResponse<T>(data: T, delay = 250): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), delay));
 }
 
-/** Future endpoint namespace map — keep in sync with backend router. */
+/** Endpoint namespace map — kept in sync with the future FastAPI router. */
 export const endpoints = {
   auth: {
     login: "/auth/login",
     register: "/auth/register",
+    logout: "/auth/logout",
     refresh: "/auth/refresh",
+    me: "/auth/me",
     forgot: "/auth/forgot-password",
-    reset: "/auth/reset-password",
-    verify: "/auth/verify-email",
+    resetPassword: "/auth/reset-password",
+    verifyEmail: "/auth/verify-email",
     otp: "/auth/otp",
+    resendOtp: "/auth/otp/resend",
+  },
+  users: {
+    list: "/users",
+    detail: (id: string) => `/users/${id}`,
+    invite: "/users/invite",
+    suspend: (id: string) => `/users/${id}/suspend`,
+  },
+  profile: {
+    me: "/profile/me",
+    update: "/profile/me",
+    preferences: "/profile/preferences",
+    apiKeys: "/profile/api-keys",
+  },
+  cms: {
+    pages: "/cms/pages",
+    page: (slug: string) => `/cms/pages/${slug}`,
+    blocks: "/cms/blocks",
+  },
+  pages: {
+    list: "/pages",
+    detail: (slug: string) => `/pages/${slug}`,
+    sections: (slug: string) => `/pages/${slug}/sections`,
+  },
+  navigation: {
+    root: "/navigation",
+    header: "/navigation/header",
+    footer: "/navigation/footer",
+    workspace: "/navigation/workspace",
+    admin: "/navigation/admin",
+  },
+  notifications: {
+    list: "/notifications",
+    read: (id: string) => `/notifications/${id}/read`,
+    readAll: "/notifications/read-all",
+    preferences: "/notifications/preferences",
+  },
+  settings: {
+    global: "/settings/global",
+    branding: "/settings/branding",
+    ai: "/settings/ai",
+    email: "/settings/email",
+    security: "/settings/security",
+    integrations: "/settings/integrations",
+  },
+  features: {
+    list: "/feature-flags",
+    update: (key: string) => `/feature-flags/${key}`,
+  },
+  permissions: {
+    roles: "/permissions/roles",
+    role: (id: string) => `/permissions/roles/${id}`,
+    matrix: "/permissions/matrix",
+  },
+  uploads: {
+    presign: "/uploads/presign",
+    complete: "/uploads/complete",
+    list: "/uploads",
+  },
+  forms: {
+    list: "/forms",
+    detail: (id: string) => `/forms/${id}`,
+    submit: (id: string) => `/forms/${id}/submit`,
+  },
+  components: {
+    registry: "/components/registry",
+  },
+  dashboard: {
+    widgets: "/dashboard/widgets",
+    layout: "/dashboard/layout",
+  },
+  workspace: {
+    modules: "/workspace/modules",
+    tools: "/workspace/tools",
+    preferences: "/workspace/preferences",
+    templates: "/workspace/prompt-templates",
+    artifacts: "/workspace/artifacts",
+    export: (threadId: string) => `/workspace/threads/${threadId}/export`,
+    share: (threadId: string) => `/workspace/threads/${threadId}/share`,
+    usage: "/workspace/usage",
   },
   chat: {
-    list: "/chat/threads",
+    threads: "/chat/threads",
+    thread: (id: string) => `/chat/threads/${id}`,
     stream: "/chat/stream",
     upload: "/chat/upload",
+    folders: "/chat/folders",
+    tags: "/chat/tags",
+  },
+  documents: {
+    list: "/documents",
+    detail: (id: string) => `/documents/${id}`,
+    upload: "/documents/upload",
+  },
+  search: {
+    query: "/search",
+    suggest: "/search/suggest",
+    recent: "/search/recent",
   },
   admin: {
     metrics: "/admin/metrics",
     users: "/admin/users",
     subs: "/admin/subscriptions",
+    audit: "/admin/audit",
+    emailTemplates: "/admin/email-templates",
+    docTemplates: "/admin/document-templates",
+    promptTemplates: "/admin/prompt-templates",
   },
   ai: {
     complete: "/ai/complete",
     embed: "/ai/embed",
     tools: "/ai/tools",
+    models: "/ai/models",
   },
 } as const;

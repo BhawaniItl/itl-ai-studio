@@ -7,7 +7,16 @@ import { contactService } from "@/services/contact.service";
 import { workspaceService, chatService } from "@/services/workspace.service";
 import { adminService, analyticsService, userService } from "@/services/admin.service";
 import { legalService } from "@/services/legal.service";
+import { cmsService, navigationService } from "@/services/cms.service";
+import { featureService } from "@/services/features.service";
+import { permissionService } from "@/services/permissions.service";
+import { notificationService } from "@/services/notifications.service";
+import { searchService } from "@/services/search.service";
+import { globalSettingsService } from "@/services/settings.service";
+import { widgetService } from "@/services/widgets.service";
+import { formService } from "@/services/forms.service";
 
+/* Existing (preserved) */
 export const useHome = () => useQuery({ queryKey: ["home"], queryFn: () => homeService.getHome() });
 export const useAbout = () => useQuery({ queryKey: ["about"], queryFn: () => aboutService.getAbout() });
 export const usePricing = () => useQuery({ queryKey: ["pricing"], queryFn: () => pricingService.getPlans() });
@@ -31,3 +40,47 @@ export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => userServi
 
 export const useLegal = (slug: string) =>
   useQuery({ queryKey: ["legal", slug], queryFn: () => legalService.getDoc(slug) });
+
+/* Phase 1.5 additions */
+export const useCmsPage = (slug: string) =>
+  useQuery({ queryKey: ["cms", "page", slug], queryFn: () => cmsService.getPage(slug) });
+export const useCmsPages = () =>
+  useQuery({ queryKey: ["cms", "pages"], queryFn: () => cmsService.listPages() });
+export const useNavigation = () =>
+  useQuery({ queryKey: ["navigation"], queryFn: () => navigationService.getNavigation() });
+
+export const useFeatureFlags = () =>
+  useQuery({ queryKey: ["features"], queryFn: () => featureService.list() });
+export const useRoles = () =>
+  useQuery({ queryKey: ["roles"], queryFn: () => permissionService.listRoles() });
+
+export const useNotifications = () =>
+  useQuery({ queryKey: ["notifications"], queryFn: () => notificationService.list() });
+
+export const useSearchIndex = () =>
+  useQuery({ queryKey: ["search", "index"], queryFn: () => searchService.index() });
+
+export const useGlobalSettings = () =>
+  useQuery({ queryKey: ["settings", "global"], queryFn: () => globalSettingsService.get() });
+
+export const useDashboardWidgets = () =>
+  useQuery({ queryKey: ["dashboard", "widgets"], queryFn: () => widgetService.list() });
+
+export const useForms = () =>
+  useQuery({ queryKey: ["forms"], queryFn: () => formService.list() });
+
+/* Convenience hooks */
+export { useFeatureFlagStore } from "@/store/featureFlagStore";
+export { usePermissionStore } from "@/store/permissionStore";
+export { useNotificationStore } from "@/store/notificationStore";
+export { useModalStore, modal } from "@/store/modalStore";
+export { useCommandStore } from "@/store/commandStore";
+
+import { useFeatureFlagStore } from "@/store/featureFlagStore";
+import { usePermissionStore } from "@/store/permissionStore";
+
+export const useFeatureFlag = (key: string) =>
+  useFeatureFlagStore((s) => s.isEnabled(key));
+
+export const usePermission = (permission: string) =>
+  usePermissionStore((s) => s.can(permission));
