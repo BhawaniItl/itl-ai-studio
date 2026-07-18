@@ -26,6 +26,7 @@ function AdminDashboard() {
         </p>
       </div>
 
+      {metricsLoading && !metrics ? <MetricCardsSkeleton /> : (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {(metrics ?? []).map((m, i) => (
           <motion.div
