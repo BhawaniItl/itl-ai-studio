@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { TableSkeleton } from "@/features/admin/AdminSkeletons";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsersPage() {
-  const { data: users } = useAdminUsers();
+  const { data: users, isLoading } = useAdminUsers();
   return (
     <>
       <div className="mb-6 flex items-end justify-between">
