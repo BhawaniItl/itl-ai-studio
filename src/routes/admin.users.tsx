@@ -27,6 +27,7 @@ function AdminUsersPage() {
           <Plus className="h-4 w-4" /> Invite user
         </Button>
       </div>
+      {isLoading && !users ? <TableSkeleton rows={8} cols={5} /> : (
       <Card className="p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2">
           <div className="relative flex-1 max-w-sm">
