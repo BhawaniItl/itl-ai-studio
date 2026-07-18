@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { MetricCardsSkeleton, TableSkeleton } from "@/features/admin/AdminSkeletons";
+import { MetricCardsSkeleton } from "@/features/admin/AdminSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/admin/")({
