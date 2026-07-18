@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminLayout } from "@/layouts/AdminLayout";
 import { useFeatureFlags } from "@/hooks";
 import { useFeatureFlagStore } from "@/store/featureFlagStore";
 import { Switch } from "@/components/ui/switch";
@@ -16,7 +15,7 @@ function FeatureFlagsPage() {
   const list = flags.length ? flags : (data ?? []);
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Feature flags</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -34,6 +33,6 @@ function FeatureFlagsPage() {
           </div>
         ))}
       </Card>
-    </AdminLayout>
+    </>
   );
 }

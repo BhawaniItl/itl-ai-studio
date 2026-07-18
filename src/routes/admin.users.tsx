@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Filter, Plus } from "lucide-react";
-import { AdminLayout } from "@/layouts/AdminLayout";
 import { useAdminUsers } from "@/hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/admin/users")({
 function AdminUsersPage() {
   const { data: users } = useAdminUsers();
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">Users</h1>
@@ -81,6 +80,6 @@ function AdminUsersPage() {
           </TableBody>
         </Table>
       </Card>
-    </AdminLayout>
+    </>
   );
 }
