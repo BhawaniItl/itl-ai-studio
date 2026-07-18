@@ -8,8 +8,10 @@ import { Bell, Search } from "lucide-react";
 import { useCommandStore } from "@/store/commandStore";
 import { useNotificationStore } from "@/store/notificationStore";
 
+import { SidebarNavSkeleton } from "@/features/admin/AdminSkeletons";
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { data: nav } = useAdminNav();
+  const { data: nav, isLoading: navLoading } = useAdminNav();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const openPalette = useCommandStore((s) => s.setOpen);
   const openDrawer = useNotificationStore((s) => s.setDrawerOpen);
@@ -23,36 +25,40 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             <Logo />
           </Link>
         </div>
-        <div className="mt-6 space-y-6">
-          {(nav ?? []).map((section) => (
-            <div key={section.section}>
-              <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                {section.section}
-              </p>
-              <ul className="space-y-0.5">
-                {section.items.map((item) => {
-                  const active = pathname === item.to;
-                  return (
-                    <li key={item.to}>
-                      <Link
-                        to={item.to}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
-                          active
-                            ? "bg-primary/8 text-primary"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
-                        )}
-                      >
-                        <Icon name={item.icon} className="h-4 w-4" />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
+        {navLoading && !nav ? (
+          <SidebarNavSkeleton />
+        ) : (
+          <div className="mt-6 space-y-6">
+            {(nav ?? []).map((section) => (
+              <div key={section.section}>
+                <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {section.section}
+                </p>
+                <ul className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const active = pathname === item.to;
+                    return (
+                      <li key={item.to}>
+                        <Link
+                          to={item.to}
+                          className={cn(
+                            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",
+                            active
+                              ? "bg-primary/8 text-primary"
+                              : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                          )}
+                        >
+                          <Icon name={item.icon} className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </aside>
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-6 backdrop-blur">
