@@ -5,6 +5,7 @@ import { useCmsPages } from "@/hooks";
 import { cmsService } from "@/services/cms.service";
 import { PageRenderer } from "@/components/common/PageRenderer";
 import { listRegisteredComponents } from "@/registry/components";
+import { PageBuilderSkeleton } from "@/features/admin/AdminSkeletons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
