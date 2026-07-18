@@ -3,13 +3,14 @@ import { useFeatureFlags } from "@/hooks";
 import { useFeatureFlagStore } from "@/store/featureFlagStore";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import { FeatureListSkeleton } from "@/features/admin/AdminSkeletons";
 
 export const Route = createFileRoute("/admin/features")({
   component: FeatureFlagsPage,
 });
 
 function FeatureFlagsPage() {
-  const { data } = useFeatureFlags();
+  const { data, isLoading } = useFeatureFlags();
   const flags = useFeatureFlagStore((s) => s.flags);
   const setEnabled = useFeatureFlagStore((s) => s.setEnabled);
   const list = flags.length ? flags : (data ?? []);
