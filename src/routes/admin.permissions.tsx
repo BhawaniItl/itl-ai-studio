@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRoles } from "@/hooks";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CardGridSkeleton } from "@/features/admin/AdminSkeletons";
 
 export const Route = createFileRoute("/admin/permissions")({
   component: PermissionsPage,
 });
 
 function PermissionsPage() {
-  const { data } = useRoles();
+  const { data, isLoading } = useRoles();
   return (
     <>
       <div className="mb-6">
