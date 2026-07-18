@@ -37,7 +37,7 @@ export const Route = createFileRoute("/admin/pages")({
 });
 
 function PagesPage() {
-  const { data, refetch } = useCmsPages();
+  const { data, isLoading, refetch } = useCmsPages();
   const pages = data ?? [];
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, PageConfig>>({});
