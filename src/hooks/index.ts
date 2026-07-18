@@ -32,11 +32,12 @@ export const useChatThreads = () =>
 export const useChatFolders = () =>
   useQuery({ queryKey: ["chat", "folders"], queryFn: () => workspaceService.getFolders() });
 
-export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], queryFn: () => adminService.getMetrics() });
-export const useAdminUsers = () => useQuery({ queryKey: ["admin", "users"], queryFn: () => adminService.getUsers() });
-export const useAdminNav = () => useQuery({ queryKey: ["admin", "nav"], queryFn: () => adminService.getNav() });
-export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: () => analyticsService.getOverview() });
-export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => userService.me() });
+const ADMIN_STALE = 5 * 60_000;
+export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], queryFn: () => adminService.getMetrics(), staleTime: ADMIN_STALE });
+export const useAdminUsers = () => useQuery({ queryKey: ["admin", "users"], queryFn: () => adminService.getUsers(), staleTime: ADMIN_STALE });
+export const useAdminNav = () => useQuery({ queryKey: ["admin", "nav"], queryFn: () => adminService.getNav(), staleTime: Infinity });
+export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: () => analyticsService.getOverview(), staleTime: ADMIN_STALE });
+export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => userService.me(), staleTime: ADMIN_STALE });
 
 export const useLegal = (slug: string) =>
   useQuery({ queryKey: ["legal", slug], queryFn: () => legalService.getDoc(slug) });
