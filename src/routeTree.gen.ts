@@ -31,6 +31,7 @@ import { Route as CancellationRouteImport } from './routes/cancellation'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminWorkspaceSettingsRouteImport } from './routes/admin.workspace-settings'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminThemeRouteImport } from './routes/admin.theme'
@@ -164,6 +165,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminWorkspaceSettingsRoute = AdminWorkspaceSettingsRouteImport.update({
   id: '/workspace-settings',
@@ -327,11 +333,11 @@ export interface FileRoutesByFullPath {
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cancellation': typeof CancellationRoute
   '/contact': typeof ContactRoute
   '/disclaimer': typeof DisclaimerRoute
@@ -374,6 +380,7 @@ export interface FileRoutesByTo {
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -422,6 +429,7 @@ export interface FileRoutesById {
   '/admin/theme': typeof AdminThemeRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/workspace-settings': typeof AdminWorkspaceSettingsRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -471,11 +479,11 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/admin/users'
     | '/admin/workspace-settings'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/cancellation'
     | '/contact'
     | '/disclaimer'
@@ -518,6 +526,7 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/admin/users'
     | '/admin/workspace-settings'
+    | '/admin'
   id:
     | '__root__'
     | '/'
@@ -565,6 +574,7 @@ export interface FileRouteTypes {
     | '/admin/theme'
     | '/admin/users'
     | '/admin/workspace-settings'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -747,6 +757,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/workspace-settings': {
       id: '/admin/workspace-settings'
@@ -936,6 +953,7 @@ interface AdminRouteChildren {
   AdminThemeRoute: typeof AdminThemeRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWorkspaceSettingsRoute: typeof AdminWorkspaceSettingsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -962,6 +980,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminThemeRoute: AdminThemeRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWorkspaceSettingsRoute: AdminWorkspaceSettingsRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

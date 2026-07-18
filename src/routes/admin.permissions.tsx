@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminLayout } from "@/layouts/AdminLayout";
 import { useRoles } from "@/hooks";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +10,7 @@ export const Route = createFileRoute("/admin/permissions")({
 function PermissionsPage() {
   const { data } = useRoles();
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">Roles & permissions</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -36,6 +35,6 @@ function PermissionsPage() {
           </Card>
         ))}
       </div>
-    </AdminLayout>
+    </>
   );
 }
