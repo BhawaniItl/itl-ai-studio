@@ -82,6 +82,7 @@ function AdminUsersPage() {
           </TableBody>
         </Table>
       </Card>
+      )}
     </>
   );
 }
