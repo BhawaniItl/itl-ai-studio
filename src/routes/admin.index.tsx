@@ -98,7 +98,25 @@ function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(users ?? []).slice(0, 6).map((u) => (
+              {usersLoading && !users
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-3.5 w-28" />
+                            <Skeleton className="h-2.5 w-40" />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="ml-auto h-3 w-20" /></TableCell>
+                    </TableRow>
+                  ))
+                : (users ?? []).slice(0, 6).map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
