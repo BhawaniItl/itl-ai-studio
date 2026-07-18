@@ -168,6 +168,7 @@ function PagesPage() {
         </div>
       </div>
 
+      {isLoading && pages.length === 0 ? <PageBuilderSkeleton /> : (
       <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
         <Card className="h-fit p-2 shadow-soft">
           <p className="px-2 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
