@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { MetricCardsSkeleton, TableSkeleton } from "@/features/admin/AdminSkeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -13,8 +15,8 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminDashboard() {
-  const { data: metrics } = useAdminMetrics();
-  const { data: users } = useAdminUsers();
+  const { data: metrics, isLoading: metricsLoading } = useAdminMetrics();
+  const { data: users, isLoading: usersLoading } = useAdminUsers();
   return (
     <>
       <div className="mb-8">
