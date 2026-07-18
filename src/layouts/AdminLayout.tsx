@@ -8,8 +8,10 @@ import { Bell, Search } from "lucide-react";
 import { useCommandStore } from "@/store/commandStore";
 import { useNotificationStore } from "@/store/notificationStore";
 
+import { SidebarNavSkeleton } from "@/features/admin/AdminSkeletons";
+
 export function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { data: nav } = useAdminNav();
+  const { data: nav, isLoading: navLoading } = useAdminNav();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const openPalette = useCommandStore((s) => s.setOpen);
   const openDrawer = useNotificationStore((s) => s.setDrawerOpen);
