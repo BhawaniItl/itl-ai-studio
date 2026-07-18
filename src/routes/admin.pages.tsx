@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AdminLayout } from "@/layouts/AdminLayout";
 import { useCmsPages } from "@/hooks";
 import { cmsService } from "@/services/cms.service";
 import { PageRenderer } from "@/components/common/PageRenderer";
@@ -148,7 +147,7 @@ function PagesPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">Page builder</h1>
@@ -332,6 +331,6 @@ function PagesPage() {
           </Card>
         )}
       </div>
-    </AdminLayout>
+    </>
   );
 }

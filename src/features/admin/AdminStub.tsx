@@ -1,10 +1,9 @@
-import { AdminLayout } from "@/layouts/AdminLayout";
 import { Card } from "@/components/ui/card";
 import { Construction } from "lucide-react";
 
 export function AdminStub({ title, description }: { title: string; description: string }) {
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
@@ -18,6 +17,6 @@ export function AdminStub({ title, description }: { title: string; description: 
           This module is scaffolded for future admin work — hooks, services and API endpoints are wired.
         </p>
       </Card>
-    </AdminLayout>
+    </>
   );
 }
