@@ -332,6 +332,7 @@ function PagesPage() {
           </Card>
         )}
       </div>
+      )}
     </>
   );
 }
