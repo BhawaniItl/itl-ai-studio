@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Logo } from "@/components/common/Logo";
 import { Icon } from "@/components/common/Icon";

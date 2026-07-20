@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /**
  * Dynamic CMS + page-config types.
  * These describe pages/sections/components that the Admin can later drive

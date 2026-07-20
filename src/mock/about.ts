@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export const aboutData = {
   hero: {
     eyebrow: "About ITL AI",

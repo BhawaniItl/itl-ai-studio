@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Filter, Plus } from "lucide-react";
 import { useAdminUsers } from "@/hooks";

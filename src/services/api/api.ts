@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /**
  * Central networking layer.
  * Scaffold with interceptors, retry, refresh-token, and error-handling

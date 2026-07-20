@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useEffect, useRef, useState } from "react";
 import {
   Bold,

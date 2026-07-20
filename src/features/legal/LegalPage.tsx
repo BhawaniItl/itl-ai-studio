@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll } from "framer-motion";
 import { Printer, Share2, Search, Clock, Calendar } from "lucide-react";

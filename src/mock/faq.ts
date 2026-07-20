@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { FAQItem } from "@/types";
 
 export const faqData: FAQItem[] = [

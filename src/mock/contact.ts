@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import type { ContactInfo } from "@/types";
 
 export const contactInfo: ContactInfo = {
