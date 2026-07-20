@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { TableSkeleton } from "@/features/admin/AdminSkeletons";
 
 export const Route = createFileRoute("/admin/users")({
   component: AdminUsersPage,
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsersPage() {
-  const { data: users } = useAdminUsers();
+  const { data: users, isLoading } = useAdminUsers();
   return (
     <>
       <div className="mb-6 flex items-end justify-between">
@@ -27,6 +28,7 @@ function AdminUsersPage() {
           <Plus className="h-4 w-4" /> Invite user
         </Button>
       </div>
+      {isLoading && !users ? <TableSkeleton rows={8} cols={5} /> : (
       <Card className="p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2">
           <div className="relative flex-1 max-w-sm">
@@ -81,6 +83,7 @@ function AdminUsersPage() {
           </TableBody>
         </Table>
       </Card>
+      )}
     </>
   );
 }

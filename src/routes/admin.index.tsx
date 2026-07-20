@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { MetricCardsSkeleton } from "@/features/admin/AdminSkeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -13,8 +15,8 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminDashboard() {
-  const { data: metrics } = useAdminMetrics();
-  const { data: users } = useAdminUsers();
+  const { data: metrics, isLoading: metricsLoading } = useAdminMetrics();
+  const { data: users, isLoading: usersLoading } = useAdminUsers();
   return (
     <>
       <div className="mb-8">
@@ -24,6 +26,7 @@ function AdminDashboard() {
         </p>
       </div>
 
+      {metricsLoading && !metrics ? <MetricCardsSkeleton /> : (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {(metrics ?? []).map((m, i) => (
           <motion.div
@@ -69,6 +72,9 @@ function AdminDashboard() {
           </motion.div>
         ))}
       </div>
+      )}
+
+
 
       <div className="mt-8 grid gap-4 lg:grid-cols-3">
         <Card className="p-5 shadow-soft lg:col-span-2">
@@ -92,7 +98,25 @@ function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(users ?? []).slice(0, 6).map((u) => (
+              {usersLoading && !users
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <Skeleton className="h-8 w-8 rounded-full" />
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-3.5 w-28" />
+                            <Skeleton className="h-2.5 w-40" />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="ml-auto h-3 w-20" /></TableCell>
+                    </TableRow>
+                  ))
+                : (users ?? []).slice(0, 6).map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">

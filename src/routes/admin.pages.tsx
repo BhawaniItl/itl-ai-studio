@@ -5,6 +5,7 @@ import { useCmsPages } from "@/hooks";
 import { cmsService } from "@/services/cms.service";
 import { PageRenderer } from "@/components/common/PageRenderer";
 import { listRegisteredComponents } from "@/registry/components";
+import { PageBuilderSkeleton } from "@/features/admin/AdminSkeletons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/admin/pages")({
 });
 
 function PagesPage() {
-  const { data, refetch } = useCmsPages();
+  const { data, isLoading, refetch } = useCmsPages();
   const pages = data ?? [];
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, PageConfig>>({});
@@ -168,6 +169,7 @@ function PagesPage() {
         </div>
       </div>
 
+      {isLoading && pages.length === 0 ? <PageBuilderSkeleton /> : (
       <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
         <Card className="h-fit p-2 shadow-soft">
           <p className="px-2 pt-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -331,6 +333,7 @@ function PagesPage() {
           </Card>
         )}
       </div>
+      )}
     </>
   );
 }

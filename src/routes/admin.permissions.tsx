@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useRoles } from "@/hooks";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CardGridSkeleton } from "@/features/admin/AdminSkeletons";
 
 export const Route = createFileRoute("/admin/permissions")({
   component: PermissionsPage,
 });
 
 function PermissionsPage() {
-  const { data } = useRoles();
+  const { data, isLoading } = useRoles();
   return (
     <>
       <div className="mb-6">
@@ -17,24 +18,28 @@ function PermissionsPage() {
           Configure role scopes. Permissions are matched with wildcard globs (<code>cms.*</code>, <code>*.read</code>).
         </p>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {(data ?? []).map((r) => (
-          <Card key={r.id} className="p-5 shadow-soft">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{r.label}</h3>
-              <Badge variant="secondary">{r.id}</Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">{r.description}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {r.permissions.map((p) => (
-                <span key={p} className="rounded-md bg-secondary px-1.5 py-0.5 font-mono text-[10px]">
-                  {p}
-                </span>
-              ))}
-            </div>
-          </Card>
-        ))}
-      </div>
+      {isLoading && !data ? (
+        <CardGridSkeleton count={6} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {(data ?? []).map((r) => (
+            <Card key={r.id} className="p-5 shadow-soft">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold">{r.label}</h3>
+                <Badge variant="secondary">{r.id}</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">{r.description}</p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {r.permissions.map((p) => (
+                  <span key={p} className="rounded-md bg-secondary px-1.5 py-0.5 font-mono text-[10px]">
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
     </>
   );
 }
