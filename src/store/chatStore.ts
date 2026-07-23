@@ -1,16 +1,28 @@
 import { create } from "zustand";
 import type { ChatMessage, ChatThread } from "@/types";
-import { sampleThreads } from "@/mock/workspace";
 
 interface ChatStore {
   threads: ChatThread[];
+  replaceThreads: (threads: ChatThread[]) => void;
+  upsertThread: (thread: ChatThread) => void;
   addMessage: (threadId: string, message: ChatMessage) => void;
   createThread: (t: ChatThread) => void;
   updateThread: (id: string, patch: Partial<ChatThread>) => void;
   deleteThread: (id: string) => void;
 }
 export const useChatStore = create<ChatStore>((set) => ({
-  threads: sampleThreads,
+  threads: [],
+  replaceThreads: (threads) => set({ threads }),
+  upsertThread: (thread) =>
+    set((s) => {
+      const existing = s.threads.findIndex((t) => t.id === thread.id);
+      if (existing >= 0) {
+        return {
+          threads: s.threads.map((t) => (t.id === thread.id ? thread : t)),
+        };
+      }
+      return { threads: [thread, ...s.threads] };
+    }),
   addMessage: (threadId, message) =>
     set((s) => ({
       threads: s.threads.map((t) =>

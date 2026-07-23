@@ -15,31 +15,23 @@ export const publicNav: NavItem[] = [
 
 export const footerNav = {
   Product: [
-    { label: "Workspace", to: "/workspace" },
     { label: "Ask Bot", to: "/#ask" },
     { label: "Case Law Research", to: "/#research" },
     { label: "Notice Reply", to: "/#notice" },
-    { label: "Summarizer", to: "/#summarize" },
-    { label: "Pricing", to: "/pricing" },
   ],
   Solutions: [
     { label: "For CAs", to: "/#product" },
     { label: "For Advocates", to: "/#product" },
-    { label: "For Firms", to: "/pricing" },
     { label: "For In-house Teams", to: "/pricing" },
   ],
   Resources: [
     { label: "FAQ", to: "/faq" },
     { label: "About", to: "/about" },
     { label: "Contact", to: "/contact" },
-    { label: "Admin Demo", to: "/admin" },
   ],
   Legal: [
     { label: "Privacy Policy", to: "/privacy" },
-    { label: "Terms", to: "/terms" },
-    { label: "Disclaimer", to: "/disclaimer" },
     { label: "Refund Policy", to: "/refund" },
     { label: "Cancellation Policy", to: "/cancellation" },
-    { label: "Intellectual Property", to: "/intellectual-property" },
   ],
 };

@@ -11,7 +11,7 @@ interface WorkspaceStore {
 export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
   activeModuleId: "income-tax",
   activeToolId: "ask",
-  activeThreadId: "t1",
+  activeThreadId: null,
   setModule: (id) => set({ activeModuleId: id }),
   setTool: (id) => set({ activeToolId: id }),
   setThread: (id) => set({ activeThreadId: id }),

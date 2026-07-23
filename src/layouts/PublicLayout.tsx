@@ -189,42 +189,13 @@ function TopNav() {
 function Footer() {
   return (
     <footer className="mt-24 border-t border-border/60 bg-surface-2/40">
-      <div className="mx-auto max-w-7xl px-6 py-16">
+      <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
           <div>
             <Logo />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
               {siteConfig.description}
             </p>
-            <div className="mt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Newsletter</p>
-              <form className="mt-2 flex max-w-sm items-center gap-2">
-                <input
-                  type="email"
-                  placeholder="you@firm.in"
-                  className="h-10 flex-1 rounded-xl border border-border/60 bg-card px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20"
-                  aria-label="Email"
-                />
-                <Button size="sm" className="h-10 rounded-xl gradient-primary text-primary-foreground">Subscribe</Button>
-              </form>
-              <p className="mt-2 text-[11px] text-muted-foreground">Product updates. No spam.</p>
-            </div>
-            <div className="mt-6 flex items-center gap-2">
-              {[
-                { href: siteConfig.social.twitter, icon: Twitter, label: "Twitter" },
-                { href: siteConfig.social.linkedin, icon: Linkedin, label: "LinkedIn" },
-                { href: "https://github.com", icon: Github, label: "GitHub" },
-              ].map(({ href, icon: I, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="grid h-9 w-9 place-items-center rounded-lg border border-border/60 bg-card text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <I className="h-4 w-4" />
-                </a>
-              ))}
-            </div>
           </div>
           {Object.entries(footerNav).map(([section, items]) => (
             <div key={section}>

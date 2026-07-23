@@ -199,6 +199,7 @@ export const endpoints = {
   },
   ai: {
     complete: "/ai/complete",
+    query: "/ai/query",
     embed: "/ai/embed",
     tools: "/ai/tools",
     models: "/ai/models",

@@ -1,0 +1,174 @@
+@media print {
+	body {
+		margin: 0 !important;
+	}
+}
+
+/* Do NOT force a global editor font.
+   Let pasted content preserve original fonts. */
+:root {
+	--ck-content-font-family: inherit;
+}
+
+.main-container {
+	font-family: var(--ck-content-font-family);
+	width: 100%;
+}
+
+.editor-container_classic-editor .editor-container__editor {
+	width: 100%;
+	min-width: 0;
+	max-width: none;
+}
+
+/* Full-width editable area */
+.rich-text-editor .ck.ck-editor,
+.rich-text-editor .ck.ck-editor__main,
+.rich-text-editor .ck-editor__editable_inline {
+	width: 100% !important;
+	max-width: none !important;
+}
+
+.rich-text-editor .ck-editor__editable_inline {
+	min-height: 500px;
+	padding: 1.25rem 1.5rem;
+}
+
+.rich-text-editor .ck.ck-toolbar {
+	flex-wrap: wrap;
+}
+
+.editor-container__sidebar_ckeditor-ai:has(.ck-tabs.ck-hidden) {
+	max-width: 0;
+	min-width: 0;
+}
+
+/* Preserve pasted formatting fidelity */
+.ck-content {
+	line-height: normal;
+	word-break: break-word;
+}
+
+.ck-content * {
+	box-sizing: border-box;
+}
+
+/* IMPORTANT:
+   Do NOT override margins/padding heavily.
+   Let pasted content preserve original spacing. */
+.ck-content p,
+.ck-content ul,
+.ck-content ol,
+.ck-content li,
+.ck-content div,
+.ck-content table,
+.ck-content blockquote {
+	font-family: inherit;
+}
+
+/* Preserve nested list indentation better */
+.ck-content ul,
+.ck-content ol {
+	padding-left: inherit;
+}
+
+/* Better table fidelity */
+.ck-content table {
+	border-collapse: collapse;
+	width: auto;
+}
+
+.ck-content td,
+.ck-content th {
+	vertical-align: top;
+}
+
+/* Optional document styles */
+.ck-content h3.category {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 20px;
+	font-weight: bold;
+	color: #555;
+	letter-spacing: 10px;
+	margin: 0;
+	padding: 0;
+}
+
+.ck-content h2.document-title {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 50px;
+	font-weight: bold;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ck-content h3.document-subtitle {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 20px;
+	color: #555;
+	margin: 0 0 1em;
+	font-weight: bold;
+	padding: 0;
+}
+
+.ck-content p.info-box {
+	--background-size: 30px;
+	--background-color: #e91e63;
+
+	padding: 1.2em 2em;
+	border: 1px solid var(--background-color);
+
+	background:
+		linear-gradient(
+			135deg,
+			var(--background-color) 0%,
+			var(--background-color) var(--background-size),
+			transparent var(--background-size)
+		),
+		linear-gradient(
+			135deg,
+			transparent calc(100% - var(--background-size)),
+			var(--background-color) calc(100% - var(--background-size)),
+			var(--background-color)
+		);
+
+	border-radius: 10px;
+	margin: 1.5em 2em;
+	box-shadow: 5px 5px 0 #ffe6ef;
+}
+
+.ck-content span.marker {
+	background: yellow;
+}
+
+.ck-content span.spoiler {
+	background: #000;
+	color: #000;
+}
+
+.ck-content span.spoiler:hover {
+	background: #000;
+	color: #fff;
+}
+
+.ck-content .button {
+	display: inline-block;
+	width: 260px;
+	border-radius: 8px;
+	margin: 0 auto;
+	padding: 12px;
+	color: #ffffff;
+	font-size: 24px;
+	font-weight: 700;
+	text-align: center;
+	text-decoration: none;
+}
+
+.ck-content .button--green {
+	background-color: #406b1e;
+}
+
+.ck-content .button--black {
+	background-color: #141517;
+}

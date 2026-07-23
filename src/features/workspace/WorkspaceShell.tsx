@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { PanelLeftOpen, PanelRightOpen, Share2, MoreHorizontal, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export function WorkspaceShell() {
   const { data: modules } = useWorkspaceModules();
   const threads = useChatStore((s) => s.threads);
   const addMessage = useChatStore((s) => s.addMessage);
+  const upsertThread = useChatStore((s) => s.upsertThread);
 
   const activeModule = modules?.find((m) => m.id === activeModuleId);
   const thread = threads.find((t) => t.id === activeThreadId) ?? null;
@@ -33,17 +34,50 @@ export function WorkspaceShell() {
   const [streaming, setStreaming] = useState(false);
 
   async function handleSend(prompt: string) {
+    if (!thread && !activeThreadId) {
+      setStreaming(true);
+      try {
+        const { message, thread: backendThread } = await chatService.sendMessage(null, prompt, {
+          moduleId: activeModuleId,
+          toolId: activeToolId,
+        });
+        if (backendThread) {
+          upsertThread(backendThread);
+        }
+        if (backendThread?.id) {
+          useWorkspaceStore.getState().setThread(backendThread.id);
+        }
+        if (backendThread) {
+          addMessage(backendThread.id, message);
+        }
+      } finally {
+        setStreaming(false);
+      }
+      return;
+    }
+
     if (!thread) return;
+
     addMessage(thread.id, {
       id: crypto.randomUUID(),
       role: "user",
       content: prompt,
       createdAt: new Date().toISOString(),
     });
+
     setStreaming(true);
-    const reply = await chatService.sendMessage(thread.id, prompt);
-    addMessage(thread.id, reply);
-    setStreaming(false);
+    try {
+      const { message, thread: backendThread } = await chatService.sendMessage(thread.id, prompt, {
+        moduleId: activeModuleId,
+        toolId: activeToolId,
+      });
+      if (backendThread) {
+        upsertThread(backendThread);
+      }
+      addMessage(thread.id, message);
+    } finally {
+      setStreaming(false);
+    }
   }
 
   return (

@@ -11,26 +11,37 @@ import {
   LogOut,
   ChevronsLeft,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { Logo } from "@/components/common/Logo";
 import { Icon } from "@/components/common/Icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useChatFolders, useWorkspaceModules } from "@/hooks";
+import { useChatFolders, useChatThreads, useWorkspaceModules } from "@/hooks";
 import { useWorkspaceStore, useSidebarStore, useChatStore } from "@/store";
 
 export function WorkspaceSidebar() {
   const [query, setQuery] = useState("");
   const threads = useChatStore((s) => s.threads);
+  const replaceThreads = useChatStore((s) => s.replaceThreads);
   const { data: folders } = useChatFolders();
   const { data: modules } = useWorkspaceModules();
+  const { data: threadList } = useChatThreads();
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
   const setModule = useWorkspaceStore((s) => s.setModule);
   const activeThreadId = useWorkspaceStore((s) => s.activeThreadId);
   const setThread = useWorkspaceStore((s) => s.setThread);
   const toggleLeft = useSidebarStore((s) => s.toggleLeft);
+
+  useEffect(() => {
+    if (threadList && threadList.length > 0) {
+      replaceThreads(threadList);
+      if (!activeThreadId) {
+        setThread(threadList[0].id);
+      }
+    }
+  }, [activeThreadId, replaceThreads, setThread, threadList]);
 
   const filtered = (threads ?? []).filter(
     (t) =>
