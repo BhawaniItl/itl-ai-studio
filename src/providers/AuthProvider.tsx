@@ -13,7 +13,10 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
+  
   const token = useToken();
   const updateUser = useUpdateUser();
   const clear = useClearAuth();
@@ -24,27 +27,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isError,
   } = useMe(!!token);
 
-  /**
-   * Keep the auth store synchronized with the backend.
-   */
   useEffect(() => {
-    if (!token) return;
-
-    if (isSuccess && data) {
+    if (token && isSuccess && data) {
       updateUser(data);
     }
-  }, [token, isSuccess, data, updateUser]);
+  }, [
+    token,
+    isSuccess,
+    data,
+    updateUser,
+  ]);
 
-  /**
-   * Invalid / expired token.
-   */
   useEffect(() => {
-    if (!token) return;
-
-    if (isError) {
+    if (token && isError) {
       clear();
     }
-  }, [token, isError, clear]);
-
+  }, [
+    token,
+    isError,
+    clear,
+  ]);
   return <>{children}</>;
 }

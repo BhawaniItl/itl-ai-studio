@@ -11,7 +11,7 @@ export const useToken = () =>
   useAuthStore((state) => state.token);
 
 export const useIsAuthenticated = () =>
-  useAuthStore((state) => state.isAuthenticated);
+  useAuthStore((state) => !!state.token);
 
 export const useIsAdmin = () =>
   useAuthStore((state) => state.user?.is_admin ?? false);

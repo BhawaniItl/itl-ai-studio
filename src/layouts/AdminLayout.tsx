@@ -10,6 +10,7 @@ import { useCommandStore } from "@/store/commandStore";
 import { useNotificationStore } from "@/store/notificationStore";
 
 import { SidebarNavSkeleton } from "@/features/admin/AdminSkeletons";
+import { UserMenu } from "@/components/common/UserMenu";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const { data: nav, isLoading: navLoading } = useAdminNav();
@@ -83,7 +84,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                 </span>
               )}
             </Button>
-            <div className="h-8 w-8 rounded-full gradient-primary" />
+            <UserMenu />
           </div>
         </header>
         <main className="flex-1 p-6 md:p-8">{children}</main>

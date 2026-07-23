@@ -16,6 +16,7 @@ import {
   useClearAuth,
 } from "@/hooks/useAuth";
 import { authService } from "@/services/auth.service";
+import { ChevronDown, LogOut, Shield, User } from "lucide-react";
 
 
 export function UserMenu() {
@@ -46,19 +47,30 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="outline-none">
-          <Avatar className="h-9 w-9 cursor-pointer">
-            <AvatarFallback>
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-        </button>
+          <button
+              className="
+              group flex items-center gap-3 rounded-xl
+              border border-border/60 bg-card
+              px-2 py-1.5
+              transition-all
+              hover:bg-secondary
+              hover:shadow-sm
+              "
+          >
+              <Avatar className="h-7 w-7 ring-2 ring-primary/15 transition-all group-hover:ring-primary/30">
+                <AvatarFallback className="gradient-primary text-sm font-semibold text-primary-foreground">
+                    {initials}
+                </AvatarFallback>
+              </Avatar>
+
+              <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+          </button>
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end">
-
         <DropdownMenuItem asChild>
           <Link to="/profile">
+            <User className="mr-2 h-4 w-4" />
             Profile
           </Link>
         </DropdownMenuItem>
@@ -66,6 +78,7 @@ export function UserMenu() {
         {user?.is_admin && (
           <DropdownMenuItem asChild>
             <Link to="/admin">
+              <Shield className="mr-2 h-4 w-4" />
               Admin Dashboard
             </Link>
           </DropdownMenuItem>
@@ -74,7 +87,8 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={logout}>
-          Logout
+          <LogOut className="mr-2 h-4 w-4 text-destructive" />
+          Sign Out
         </DropdownMenuItem>
 
       </DropdownMenuContent>

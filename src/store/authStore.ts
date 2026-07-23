@@ -2,24 +2,24 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-interface AuthUser {
-    id: number;
-    email: string;
-    name: string;
-    firm?: string;
-    mobile?: string;
-    status: "APPROVED" | "PENDING" | "SUSPENDED";
-    plan?: string;
-    is_admin: boolean;
-    is_staff: boolean;
+export interface AuthUser {
+  id: number;
+  email: string;
+  name: string;
+  firm?: string;
+  mobile?: string;
+  status: "APPROVED" | "PENDING" | "SUSPENDED";
+  plan?: string;
+  is_admin: boolean;
+  is_staff: boolean;
 }
 
 interface AuthStore {
   user: AuthUser | null;
   token: string | null;
-  isAuthenticated: boolean;
-  setSession: (u: AuthUser, t: string) => void;
-  updateUser: (u: Partial<AuthUser>) => void;
+
+  setSession: (user: AuthUser, token: string) => void;
+  updateUser: (changes: Partial<AuthUser>) => void;
   clear: () => void;
 }
 
@@ -28,29 +28,54 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
-      isAuthenticated: false,
+
       setSession: (user, token) =>
         set({
-            user,
-            token,
-            isAuthenticated: true,
+          user,
+          token,
         }),
-      clear: () =>
-    set({
-        user: null,
-        token: null,
-        isAuthenticated: false,
-    }),
-    updateUser: (changes) =>
-    set((state) => ({
-        user: state.user
+
+      updateUser: (changes) =>
+        set((state) => ({
+          user: state.user
             ? {
-                  ...state.user,
-                  ...changes,
+                ...state.user,
+                ...changes,
               }
             : null,
-    })),
+        })),
+
+      clear: () =>
+        set({
+          user: null,
+          token: null,
+        }),
     }),
-    { name: "itl.auth" },
+    {
+      name: "itl.auth",
+    },
   ),
 );
+
+// ---------- Selectors ----------
+
+export const useCurrentUser = () =>
+  useAuthStore((state) => state.user);
+
+export const useToken = () =>
+  useAuthStore((state) => state.token);
+
+export const useIsAuthenticated = () =>
+  useAuthStore((state) => !!state.token);
+
+export const useIsAdmin = () =>
+  useAuthStore((state) => !!state.user?.is_admin);
+
+export const useSetSession = () =>
+  useAuthStore((state) => state.setSession);
+
+export const useUpdateUser = () =>
+  useAuthStore((state) => state.updateUser);
+
+export const useClearAuth = () =>
+  useAuthStore((state) => state.clear);

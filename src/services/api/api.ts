@@ -5,6 +5,7 @@
  * placeholders. Services return mock data in dev; replace only the service
  * implementation to switch to a real backend.
  */
+import { useAuthStore } from "@/store/authStore";
 import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
@@ -22,8 +23,7 @@ const env: ApiEnv = {
 };
 
 function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("itl.access_token");
+  return useAuthStore.getState().token;
 }
 
 async function refreshAuthToken(): Promise<string | null> {
@@ -202,5 +202,40 @@ export const endpoints = {
     embed: "/ai/embed",
     tools: "/ai/tools",
     models: "/ai/models",
+  },
+  books: {
+    list: "/admin/books",
+    detail: (id: string) =>
+      `/admin/books/${id}`,
+    create: "/admin/books",
+    update: (id: string) =>
+      `/admin/books/${id}`,
+    delete: (id: string) =>
+      `/admin/books/${id}`,
+    sections: (bookId: string) =>
+      `/admin/books/${bookId}/sections`,
+    tree: (bookId: string) =>
+      `/admin/books/${bookId}/tree`,
+    section: (sectionId: string) =>
+      `/admin/books/sections/${sectionId}`,
+    createSection: "/admin/books/sections",
+    updateSection: (sectionId: string) =>
+      `/admin/books/sections/${sectionId}`,
+    deleteSection: (sectionId: string) =>
+      `/admin/books/sections/${sectionId}`,
+    sectionDropdown: (bookId: string) =>
+      `/admin/books/${bookId}/sections/dropdown`,
+    contents: "/admin/books/contents",
+    content: (contentId: string) =>
+      `/admin/books/contents/${contentId}`,
+    createContent: "/admin/books/contents",
+    updateContent: (contentId: string) =>
+      `/admin/books/contents/${contentId}`,
+    deleteContent: (contentId: string) =>
+      `/admin/books/contents/${contentId}`,
+    contentsBySection: (sectionId: string) =>
+      `/admin/books/sections/${sectionId}/contents`,
+    incrementView: (contentId: string) =>
+      `/admin/books/contents/${contentId}/view`,
   },
 } as const;
