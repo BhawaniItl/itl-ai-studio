@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
@@ -50,7 +51,7 @@ function Login() {
     try {
       await authService.login(values.email, values.password, values.remember ?? false);
       toast.success("Signed in");
-      nav({ to: "/workspace" });
+      nav({ to: "/" });
     } catch {
       setError("Invalid email or password.");
     }

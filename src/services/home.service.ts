@@ -1,32 +1,21 @@
-import { mockResponse } from "./api/api";
-import {
-  heroData,
-  features,
-  testimonials,
-  workflow,
-  logos,
-  trustSources,
-  painPoints,
-  solutionSteps,
-  showcases,
-  comparison,
-  noticeReplyFlow,
-} from "@/mock/home";
+/* eslint-disable prettier/prettier */
+import { cmsService } from "./cms.service";
 
 export const homeService = {
   async getHome() {
-    return mockResponse({
-      hero: heroData,
-      features,
-      testimonials,
-      workflow,
-      logos,
-      trustSources,
-      painPoints,
-      solutionSteps,
-      showcases,
-      comparison,
-      noticeReplyFlow,
-    });
+    const data = await cmsService.getPage("home");
+
+    return {
+      hero: data.hero,
+      features: data.features,
+      testimonials: data.testimonials,
+      workflow: data.workflow,
+      trustSources: data.trustSources,
+      painPoints: data.painPoints,
+      solutionSteps: data.solutionSteps,
+      showcases: data.showcases,
+      comparison: data.comparison,
+      noticeReplyFlow: data.noticeReplyFlow,
+    };
   },
 };

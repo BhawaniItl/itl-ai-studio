@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+/* eslint-disable prettier/prettier */
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { homeService } from "@/services/home.service";
 import { aboutService } from "@/services/about.service";
 import { pricingService } from "@/services/pricing.service";
@@ -34,10 +35,10 @@ export const useChatFolders = () =>
 
 const ADMIN_STALE = 5 * 60_000;
 export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], queryFn: () => adminService.getMetrics(), staleTime: ADMIN_STALE });
-export const useAdminUsers = () => useQuery({ queryKey: ["admin", "users"], queryFn: () => adminService.getUsers(), staleTime: ADMIN_STALE });
+export const useAdminUsers = (params: UserListParams,) => useQuery({ queryKey: ["admin", "users", params], queryFn: () => adminService.getUsers(params), staleTime: ADMIN_STALE, placeholderData: keepPreviousData,});
 export const useAdminNav = () => useQuery({ queryKey: ["admin", "nav"], queryFn: () => adminService.getNav(), staleTime: Infinity });
 export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: () => analyticsService.getOverview(), staleTime: ADMIN_STALE });
-export const useMe = () => useQuery({ queryKey: ["me"], queryFn: () => userService.me(), staleTime: ADMIN_STALE });
+export const useMe = (enabled = true) => useQuery({ queryKey: ["me"], queryFn: () => userService.me(), enabled, staleTime: ADMIN_STALE });
 
 export const useLegal = (slug: string) =>
   useQuery({ queryKey: ["legal", slug], queryFn: () => legalService.getDoc(slug) });
@@ -79,6 +80,7 @@ export { useCommandStore } from "@/store/commandStore";
 
 import { useFeatureFlagStore } from "@/store/featureFlagStore";
 import { usePermissionStore } from "@/store/permissionStore";
+import { UserListParams } from "@/types/admin";
 
 export const useFeatureFlag = (key: string) =>
   useFeatureFlagStore((s) => s.isEnabled(key));

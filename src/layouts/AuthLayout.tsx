@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Link } from "@tanstack/react-router";
 import { Logo } from "@/components/common/Logo";
 import { motion } from "framer-motion";

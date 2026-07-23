@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Copy, Download, RefreshCw, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell } from "lucide-react";

@@ -1,10 +1,23 @@
-import { mockResponse } from "./api/api";
-import { adminMetrics, adminUsers, adminNav } from "@/mock/admin";
+/* eslint-disable prettier/prettier */
+import { UserListParams } from "@/types/admin";
+import { api, endpoints, mockResponse } from "./api/api";
+import { adminMetrics, adminNav } from "@/mock/admin";
+
 
 export const adminService = {
   getMetrics: () => mockResponse(adminMetrics),
-  getUsers: () => mockResponse(adminUsers),
   getNav: () => mockResponse(adminNav),
+  async getUsers(params: UserListParams) {
+
+    const { data } = await api.get(
+        endpoints.adminUsers.list,
+        {
+            params,
+        },
+    );
+
+    return data;
+}
 };
 
 export const analyticsService = {
@@ -12,14 +25,10 @@ export const analyticsService = {
 };
 
 export const userService = {
-  me: () =>
-    mockResponse({
-      id: "me",
-      name: "CA Demo User",
-      email: "demo@itl.ai",
-      role: "user" as const,
-      plan: "pro" as const,
-    }),
+  async me() {
+    const { data } = await api.get(endpoints.auth.me);
+    return data;
+  },
 };
 
 export const settingsService = {

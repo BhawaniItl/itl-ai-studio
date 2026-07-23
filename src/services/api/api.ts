@@ -82,11 +82,20 @@ export const endpoints = {
     otp: "/auth/otp",
     resendOtp: "/auth/otp/resend",
   },
-  users: {
-    list: "/users",
-    detail: (id: string) => `/users/${id}`,
-    invite: "/users/invite",
-    suspend: (id: string) => `/users/${id}/suspend`,
+  adminUsers: {
+      list: "/admin/users",
+      detail: (id: number) =>
+          `/admin/users/${id}`,
+      update: (id: number) =>
+          `/admin/users/${id}`,
+      approve: (id: number) =>
+          `/admin/users/${id}/approve`,
+      suspend: (id: number) =>
+          `/admin/users/${id}/suspend`,
+      delete: (id: number) =>
+          `/admin/users/${id}/delete`,
+      history: (id: number) =>
+          `/admin/users/${id}/history`,
   },
   profile: {
     me: "/profile/me",

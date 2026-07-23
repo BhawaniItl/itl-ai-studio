@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { z } from "zod";
@@ -86,7 +87,7 @@ function Register() {
       fax: values.fax || undefined,
     });
     toast.success("Account created. Verify your email to continue.");
-    nav({ to: "/verify-email", search: { email: values.email } as any });
+    nav({ to: "/login", });
   }
 
   const submitting = form.formState.isSubmitting;

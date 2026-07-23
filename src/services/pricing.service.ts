@@ -1,11 +1,15 @@
-import { mockResponse } from "./api/api";
-import { pricingPlans, pricingComparison, enterpriseData, pricingFaqs } from "@/mock/pricing";
+/* eslint-disable prettier/prettier */
+import { cmsService } from "./cms.service";
+
 export const pricingService = {
-  getPlans: () =>
-    mockResponse({
-      plans: pricingPlans,
-      comparison: pricingComparison,
-      enterprise: enterpriseData,
-      faqs: pricingFaqs,
-    }),
+  async getPlans() {
+    const data = await cmsService.getPage("pricing");
+
+    return {
+      plans: data.pricingPlans,
+      comparison: data.pricingComparison,
+      enterprise: data.enterpriseData,
+      faqs: data.pricingFaqs,
+    };
+  },
 };

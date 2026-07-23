@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { ArrowUpRight, TrendingUp } from "lucide-react";
@@ -8,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { MetricCardsSkeleton } from "@/features/admin/AdminSkeletons";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -16,7 +18,14 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminDashboard() {
   const { data: metrics, isLoading: metricsLoading } = useAdminMetrics();
-  const { data: users, isLoading: usersLoading } = useAdminUsers();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("");
+  const [status, setStatus] = useState("");
+  const [plan, setPlan] = useState("");
+  const [sort, setSort] = useState("created_at");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const {data: users, isLoading: usersLoading, } = useAdminUsers({page,limit: 10,search,role,status,plan,sort, order,});
   return (
     <>
       <div className="mb-8">
@@ -94,7 +103,7 @@ function AdminDashboard() {
                 <TableHead>Plan</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Joined</TableHead>
+                <TableHead className="text-right">Last Logged In At</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -116,7 +125,7 @@ function AdminDashboard() {
                       <TableCell className="text-right"><Skeleton className="ml-auto h-3 w-20" /></TableCell>
                     </TableRow>
                   ))
-                : (users ?? []).slice(0, 6).map((u) => (
+                : (users.items ?? []).slice(0, 6).map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">
@@ -135,15 +144,16 @@ function AdminDashboard() {
                     <Badge
                       className={cn(
                         "capitalize",
-                        u.status === "active" && "bg-success/10 text-success hover:bg-success/10",
-                        u.status === "invited" && "bg-info/10 text-info hover:bg-info/10",
-                        u.status === "suspended" && "bg-destructive/10 text-destructive hover:bg-destructive/10",
+                        u.status === "APPROVED" && "bg-success/10 text-success hover:bg-success/10",
+                        u.status === "PENDING" && "bg-info/10 text-info hover:bg-info/10",
+                        u.status === "SUSPENDED" && "bg-destructive/10 text-destructive hover:bg-destructive/10",
+                        u.status === "DELETED" && "bg-destructive/10 text-destructive hover:bg-destructive/10",
                       )}
                     >
                       {u.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right text-xs text-muted-foreground">{u.joinedAt}</TableCell>
+                  <TableCell className="text-right text-xs text-muted-foreground">{u.last_login}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

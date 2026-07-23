@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { mockResponse } from "./api/api";
 import {
   workspaceModules,

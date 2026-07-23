@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Paperclip, Send, Sparkles, StopCircle, Mic } from "lucide-react";

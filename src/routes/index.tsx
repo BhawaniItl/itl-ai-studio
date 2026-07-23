@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { PublicLayout } from "@/layouts/PublicLayout";
 import {
@@ -51,7 +52,7 @@ function Home() {
   return (
     <PublicLayout>
       <Hero data={data.hero} />
-      <LogoStrip items={data.logos} />
+      {/* <LogoStrip items={data.logos} /> */}
       <ProblemSection items={data.painPoints} />
       <SolutionSection steps={data.solutionSteps} />
       <WorkspaceShowcase />

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Link, useRouterState } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Menu, ArrowRight, Github, Linkedin, Twitter, Sun, Moon } from "lucide-react";
@@ -9,6 +10,12 @@ import { siteConfig } from "@/config/site";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useThemeStore } from "@/store/themeStore";
 import { cn } from "@/lib/utils";
+import {
+  useCurrentUser,
+  useIsAuthenticated,
+} from "@/hooks/useAuth";
+import { UserMenu } from "@/components/common/UserMenu";
+
 
 function ThemeToggle() {
   const mode = useThemeStore((s) => s.theme.mode);
@@ -36,6 +43,9 @@ function TopNav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  const user = useCurrentUser();
+  const isAuthenticated = useIsAuthenticated();
+
   return (
     <header className="sticky top-0 z-40 w-full px-3 pt-3 sm:px-4">
       <motion.div
@@ -81,15 +91,29 @@ function TopNav() {
         </nav>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link to="/login">Sign in</Link>
-          </Button>
-          <Button asChild size="sm" className="gap-1 gradient-primary text-primary-foreground shadow-soft">
-            <Link to="/workspace">
+          <Button
+            asChild
+            size="sm"
+            className="gap-1 gradient-primary text-primary-foreground shadow-soft"
+          >
+            <Link to={isAuthenticated ? "/workspace" : "/login"}>
               Open Workspace
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
+
+          {isAuthenticated ? (
+            <UserMenu />
+          ) : (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="hidden sm:inline-flex"
+            >
+              <Link to="/login">Sign in</Link>
+            </Button>
+          )}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
@@ -117,9 +141,42 @@ function TopNav() {
                     </Link>
                   ),
                 )}
-                <Link to="/login" className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary">
+                {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                  >
+                    Profile
+                  </Link>
+
+                  {user?.is_admin && (
+                    <Link
+                      to="/admin"
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    className="rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-secondary"
+                    onClick={() => {
+                      // logout here
+                    }}
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                >
                   Sign in
                 </Link>
+              )}
               </div>
             </SheetContent>
           </Sheet>

@@ -1,6 +1,6 @@
-import { mockResponse } from "./api/api";
-import { legalDocs } from "@/mock/legal";
+/* eslint-disable prettier/prettier */
+import { cmsService } from "./cms.service";
 
 export const legalService = {
-  getDoc: (slug: string) => mockResponse(legalDocs[slug] ?? null),
+  getDoc: (slug: string) => cmsService.getPage(slug),
 };

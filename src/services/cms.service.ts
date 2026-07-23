@@ -1,15 +1,38 @@
-import { mockResponse } from "./api/api";
-import { pageConfigs, navigationConfig } from "@/mock/cms";
+/* eslint-disable prettier/prettier */
+import { api, endpoints } from "./api/api";
 import type { PageConfig } from "@/types/cms";
 
 export const cmsService = {
-  getPage: (slug: string) =>
-    mockResponse<PageConfig | null>(pageConfigs.find((p) => p.slug === slug) ?? null),
-  listPages: () => mockResponse(pageConfigs),
-  updatePage: (slug: string, patch: Partial<PageConfig>) =>
-    mockResponse({ ok: true, slug, patch }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async getPage<T = any>(slug: string): Promise<T> {
+    const { data } = await api.get(endpoints.cms.page(slug));
+
+    // Backend response:
+    // {
+    //   id,
+    //   route,
+    //   title,
+    //   content: { ... },
+    //   status
+    // }
+
+    return data.content as T;
+  },
+
+  async listPages() {
+    const { data } = await api.get(endpoints.cms.pages);
+    return data;
+  },
+
+  async updatePage(slug: string, patch: Partial<PageConfig>) {
+    const { data } = await api.put(endpoints.cms.page(slug), patch);
+    return data;
+  },
 };
 
 export const navigationService = {
-  getNavigation: () => mockResponse(navigationConfig),
+  async getNavigation() {
+    const { data } = await api.get(endpoints.navigation.root);
+    return data;
+  },
 };

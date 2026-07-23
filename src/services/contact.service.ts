@@ -1,6 +1,13 @@
-import { mockResponse } from "./api/api";
-import { contactInfo, contactReasons } from "@/mock/contact";
+/* eslint-disable prettier/prettier */
+import { cmsService } from "./cms.service";
+
 export const contactService = {
-  getInfo: () => mockResponse({ info: contactInfo, reasons: contactReasons }),
-  submit: (payload: Record<string, unknown>) => mockResponse({ ok: true, payload }, 600),
+  async getInfo() {
+    const data = await cmsService.getPage("contact");
+
+    return {
+      info: data.contactInfo,
+      reasons: data.contactReasons,
+    };
+  },
 };

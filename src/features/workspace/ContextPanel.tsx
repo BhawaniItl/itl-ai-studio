@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { BookOpen, Scale, FileText, Bell, Bookmark, Paperclip, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

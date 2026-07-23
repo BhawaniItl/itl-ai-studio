@@ -1,3 +1,10 @@
-import { mockResponse } from "./api/api";
-import { faqData } from "@/mock/faq";
-export const faqService = { getFaqs: () => mockResponse(faqData) };
+/* eslint-disable prettier/prettier */
+import { cmsService } from "./cms.service";
+
+export const faqService = {
+  async getFaqs() {
+    const data = await cmsService.getPage("faq");
+
+    return data.faqData;
+  },
+};

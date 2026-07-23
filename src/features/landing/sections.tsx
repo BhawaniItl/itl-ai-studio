@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Link } from "@tanstack/react-router";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
@@ -23,6 +24,10 @@ import type {
   TrustSource,
   LogoItem,
 } from "@/types";
+import {
+  useCurrentUser,
+  useIsAuthenticated,
+} from "@/hooks/useAuth";
 
 /* ---------------------------------- Shared ---------------------------------- */
 
@@ -108,7 +113,7 @@ export function Hero({ data }: { data: HeroData }) {
         </svg>
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-6 pt-24 pb-24 md:pt-32 md:pb-36">
+      <div className="relative mx-auto max-w-7xl px-6 pt-24 md:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -835,6 +840,7 @@ export function Testimonials({ items }: { items: Testimonial[] }) {
 /* --------------------------------- CtaBanner -------------------------------- */
 
 export function CtaBanner() {
+  const isAuthenticated = useIsAuthenticated();
   return (
     <section className="mx-auto max-w-7xl px-6 pb-24">
       <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card p-10 shadow-float md:p-16">
@@ -850,7 +856,7 @@ export function CtaBanner() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg" className="h-12 rounded-xl px-6 gradient-primary text-primary-foreground shadow-float">
-              <Link to="/workspace">Open Workspace</Link>
+              <Link to={isAuthenticated ? "/workspace" : "/login"}>Open Workspace</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6">
               <Link to="/pricing">See pricing</Link>

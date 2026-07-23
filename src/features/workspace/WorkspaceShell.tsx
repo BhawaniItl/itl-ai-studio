@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { PanelLeftOpen, PanelRightOpen, Share2, MoreHorizontal, Sparkles } from "lucide-react";

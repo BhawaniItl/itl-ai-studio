@@ -8,16 +8,6 @@ export const adminMetrics: AdminMetric[] = [
   { key: "csat", label: "CSAT", value: "4.8 / 5", delta: 1.2, trend: [4.4, 4.5, 4.5, 4.6, 4.7, 4.7, 4.8, 4.8] },
 ];
 
-export const adminUsers: AdminUser[] = [
-  { id: "u1", name: "CA Arvind Menon", email: "arvind@menonca.in", role: "admin", plan: "enterprise", status: "active", joinedAt: "2025-11-04" },
-  { id: "u2", name: "Adv. Priya Ranganathan", email: "priya@advpr.in", role: "user", plan: "pro", status: "active", joinedAt: "2026-01-12" },
-  { id: "u3", name: "CA Rohan Shah", email: "rohan@shahco.com", role: "editor", plan: "pro", status: "active", joinedAt: "2026-02-18" },
-  { id: "u4", name: "Neha Kapoor", email: "neha@kapoortax.in", role: "user", plan: "free", status: "invited", joinedAt: "2026-06-01" },
-  { id: "u5", name: "CA Suresh Iyer", email: "suresh@iyerandco.in", role: "user", plan: "pro", status: "suspended", joinedAt: "2025-08-22" },
-  { id: "u6", name: "Vikram Desai", email: "vikram@desailegal.com", role: "user", plan: "enterprise", status: "active", joinedAt: "2026-03-04" },
-  { id: "u7", name: "CA Meera Nair", email: "meera@nairca.in", role: "user", plan: "pro", status: "active", joinedAt: "2026-04-11" },
-  { id: "u8", name: "Karan Malhotra", email: "karan@kmadvisors.com", role: "user", plan: "free", status: "active", joinedAt: "2026-05-30" },
-];
 
 export const adminNav = [
   { section: "Overview", items: [
