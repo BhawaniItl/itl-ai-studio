@@ -8,7 +8,7 @@ import { contactService } from "@/services/contact.service";
 import { workspaceService, chatService } from "@/services/workspace.service";
 import { adminService, analyticsService, userService } from "@/services/admin.service";
 import { legalService } from "@/services/legal.service";
-import { cmsService, navigationService } from "@/services/cms.service";
+import { cmsContentService, cmsService, navigationService } from "@/services/cms.service";
 import { featureService } from "@/services/features.service";
 import { permissionService } from "@/services/permissions.service";
 import { notificationService } from "@/services/notifications.service";
@@ -50,6 +50,16 @@ export const useCmsPages = () =>
   useQuery({ queryKey: ["cms", "pages"], queryFn: () => cmsService.listPages() });
 export const useNavigation = () =>
   useQuery({ queryKey: ["navigation"], queryFn: () => navigationService.getNavigation() });
+
+export const useCmsContentPages = () =>
+  useQuery({ queryKey: ["cms", "content-pages"], queryFn: () => cmsContentService.listPages() });
+
+export const useCmsContentPage = (route: string | null) =>
+  useQuery({
+    queryKey: ["cms", "content-page", route],
+    queryFn: () => cmsContentService.getPage(route as string),
+    enabled: Boolean(route),
+  });
 
 export const useFeatureFlags = () =>
   useQuery({ queryKey: ["features"], queryFn: () => featureService.list() });

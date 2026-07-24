@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { isAxiosError } from "axios";
 import { api, endpoints } from "./api/api";
-import { workspaceModules } from "@/mock/workspace";
+import { chatFolders, promptSuggestions, workspaceModules } from "@/mock/workspace";
 import type { Attachment, ChatFolder, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
 
 interface AiQueryContext {
@@ -21,7 +21,7 @@ interface BackendCitation {
 }
 
 interface BackendMessage {
-  id?: string;
+  id?: string | number;
   role?: "user" | "assistant" | "system";
   content?: string;
   created_at?: string;
@@ -33,7 +33,7 @@ interface BackendMessage {
 }
 
 interface BackendThread {
-  id?: string;
+  id?: string | number;
   title?: string;
   module_id?: string;
   moduleId?: string;
@@ -48,18 +48,30 @@ interface BackendThread {
   messages?: BackendMessage[];
 }
 
+interface BackendAssistantMessage {
+  id: number;
+  answer: string;
+  confidence: number;
+  query_time_ms: number;
+  sources: BackendCitation[];
+  related_judgements?: unknown[];
+  verification?: unknown;
+  pipeline?: unknown;
+  created_at: string;
+}
+
 interface BackendAiQueryResponse {
-  message?: string;
-  content?: string;
-  role?: "assistant" | "user" | "system";
-  citations?: BackendCitation[];
-  sources?: BackendCitation[];
-  references?: BackendCitation[];
-  created_at?: string;
-  createdAt?: string;
-  thread?: BackendThread;
-  conversation?: BackendThread;
-  attachments?: Attachment[];
+  success: boolean;
+  message: string;
+  data: {
+    conversation: BackendThread;
+    user_message: {
+      id: number;
+      query: string;
+      created_at: string;
+    };
+    assistant_message: BackendAssistantMessage;
+  };
 }
 
 const normalizeCitation = (citation: BackendCitation, index: number): Citation => {
@@ -75,31 +87,49 @@ const normalizeCitation = (citation: BackendCitation, index: number): Citation =
   };
 };
 
-const normalizeMessage = (message: BackendMessage, fallbackRole: ChatMessage["role"] = "assistant"): ChatMessage => {
-  const rawSources = message.sources ?? message.citations ?? message.references ?? [];
+const normalizeMessage = (
+  message: BackendMessage,
+  fallbackRole: ChatMessage["role"] = "assistant",
+): ChatMessage => {
+  const rawSources =
+    message.sources ?? message.citations ?? message.references ?? [];
+
   return {
-    id: message.id ?? crypto.randomUUID(),
+    id: String(message.id ?? crypto.randomUUID()),
     role: message.role ?? fallbackRole,
-    content: message.content ?? message.message ?? "",
-    createdAt: message.createdAt ?? message.created_at ?? new Date().toISOString(),
-    citations: rawSources.map((source, index) => normalizeCitation(source, index)),
+    content: message.content ?? "",
+    createdAt:
+      message.createdAt ??
+      message.created_at ??
+      new Date().toISOString(),
+    citations: rawSources.map((source, index) =>
+      normalizeCitation(source, index)
+    ),
     attachments: message.attachments ?? [],
   };
 };
 
-const normalizeThread = (thread: BackendThread | null | undefined): ChatThread | null => {
-  if (!thread || !thread.id) return null;
+const normalizeThread = (
+  thread: BackendThread | null | undefined
+): ChatThread | null => {
+  if (!thread || thread.id == null) return null;
+
   return {
-    id: thread.id,
+    id: String(thread.id),
     title: thread.title ?? "New chat",
     moduleId: thread.moduleId ?? thread.module_id ?? "income-tax",
     toolId: thread.toolId ?? thread.tool_id ?? "ask",
-    updatedAt: thread.updatedAt ?? thread.updated_at ?? new Date().toISOString(),
+    updatedAt:
+      thread.updatedAt ??
+      thread.updated_at ??
+      new Date().toISOString(),
     pinned: thread.pinned,
     favorite: thread.favorite,
     folder: thread.folder,
     tags: thread.tags,
-    messages: (thread.messages ?? []).map((message) => normalizeMessage(message)),
+    messages: (thread.messages ?? []).map((message) =>
+      normalizeMessage(message)
+    ),
   };
 };
 
@@ -168,30 +198,41 @@ export const chatService = {
       throw error;
     }
   },
+  
   sendMessage: async (
     threadId: string | null,
     prompt: string,
     context: AiQueryContext = {},
   ): Promise<{ message: ChatMessage; thread: ChatThread | null }> => {
-    const { data } = await api.post<BackendAiQueryResponse>(endpoints.ai.query, {
-      query: prompt,
-      thread_id: threadId ?? undefined,
-      module_id: context.moduleId,
-      tool_id: context.toolId,
+
+    const { data } = await api.post<BackendAiQueryResponse>(
+      endpoints.ai.query,
+      {
+        query: prompt,
+        thread_id: threadId ?? undefined,
+        module_id: context.moduleId,
+        tool_id: context.toolId,
+      }
+    );
+
+    const conversation = data.data.conversation;
+    const assistant = data.data.assistant_message;
+
+    const normalizedThread = normalizeThread({
+      ...conversation,
+      id: String(conversation.id),
     });
 
-    const normalizedThread = normalizeThread(data.thread ?? data.conversation ?? null);
-    const normalizedMessage = normalizeMessage(
-      {
-        id: data.message ?? data.content ?? crypto.randomUUID(),
-        role: "assistant",
-        content: data.content ?? data.message ?? "",
-        createdAt: data.createdAt ?? data.created_at ?? new Date().toISOString(),
-        citations: data.citations ?? data.sources ?? data.references ?? [],
-        attachments: data.attachments ?? [],
-      },
-      "assistant",
-    );
+    const normalizedMessage: ChatMessage = {
+      id: String(assistant.id),
+      role: "assistant",
+      content: assistant.answer,
+      createdAt: assistant.created_at,
+      citations: (assistant.sources ?? []).map((source, index) =>
+        normalizeCitation(source, index)
+      ),
+      attachments: [],
+    };
 
     return {
       message: normalizedMessage,

@@ -19,7 +19,7 @@ export interface ApiEnv {
 
 const env: ApiEnv = {
   baseURL: (import.meta.env.VITE_API_BASE_URL as string) ?? "/api",
-  timeout: 30_000,
+  timeout: 60_000,
 };
 
 function getAuthToken(): string | null {
