@@ -30,6 +30,8 @@ export const usePromptSuggestions = (moduleId?: string) =>
   useQuery({ queryKey: ["workspace", "suggestions", moduleId], queryFn: () => workspaceService.getSuggestions(moduleId) });
 export const useChatThreads = () =>
   useQuery({ queryKey: ["chat", "threads"], queryFn: () => chatService.listThreads() });
+export const useChatFolders = () =>
+  useQuery({ queryKey: ["chat", "folders"], queryFn: () => workspaceService.getFolders() });
 
 const ADMIN_STALE = 5 * 60_000;
 export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], queryFn: () => adminService.getMetrics(), staleTime: ADMIN_STALE });

@@ -2,7 +2,7 @@
 import { isAxiosError } from "axios";
 import { api, endpoints } from "./api/api";
 import { chatFolders, promptSuggestions, workspaceModules } from "@/mock/workspace";
-import type { Attachment, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
+import type { Attachment, ChatFolder, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
 
 interface AiQueryContext {
   moduleId?: string;
@@ -45,8 +45,6 @@ interface BackendThread {
   favorite?: boolean;
   folder?: string;
   tags?: string[];
-  related_questions?: string[];
-  relatedQuestions?: string[];
   messages?: BackendMessage[];
 }
 
@@ -75,14 +73,6 @@ interface BackendAiQueryResponse {
     assistant_message: BackendAssistantMessage;
   };
 }
-
-const normalizePromptSuggestion = (value: unknown): PromptSuggestion | null => {
-  if (!value || typeof value !== "object") return null;
-  const item = value as Record<string, unknown>;
-  const moduleId = item.moduleId ?? item.module_id;
-  if (typeof item.id !== "string" || typeof item.title !== "string" || typeof item.prompt !== "string" || typeof moduleId !== "string") return null;
-  return { id: item.id, title: item.title, prompt: item.prompt, moduleId };
-};
 
 const normalizeCitation = (citation: BackendCitation, index: number): Citation => {
   const type = citation.type ?? citation.source_type ?? citation.sourceType ?? "act";
@@ -137,7 +127,6 @@ const normalizeThread = (
     favorite: thread.favorite,
     folder: thread.folder,
     tags: thread.tags,
-    relatedQuestions: thread.relatedQuestions ?? thread.related_questions ?? [],
     messages: (thread.messages ?? []).map((message) =>
       normalizeMessage(message)
     ),
@@ -152,14 +141,33 @@ const getThreadPayload = (data: unknown): BackendThread[] => {
   return [];
 };
 
+const getTodoFallback = <T>(value: T): T => value;
+
 export const workspaceService = {
   getModules: () => Promise.resolve(workspaceModules),
-  getSuggestions: async (moduleId?: string): Promise<PromptSuggestion[]> => {
-    const { data } = await api.get<unknown>(endpoints.workspace.templates);
-    const suggestions = Array.isArray(data)
-      ? data.map(normalizePromptSuggestion).filter((item): item is PromptSuggestion => item !== null)
-      : [];
-    return moduleId ? suggestions.filter((suggestion) => suggestion.moduleId === moduleId) : suggestions;
+  getFolders: async (): Promise<ChatFolder[]> => {
+    try {
+      const { data } = await api.get<ChatFolder[]>(endpoints.chat.folders);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
+        // TODO: replace with backend folders endpoint when available.
+        return [];
+      }
+      throw error;
+    }
+  },
+  getSuggestions: async (): Promise<PromptSuggestion[]> => {
+    try {
+      const { data } = await api.get<PromptSuggestion[]>(endpoints.workspace.templates);
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
+        // TODO: backend prompt-template endpoint is not available yet.
+        return [];
+      }
+      throw error;
+    }
   },
 };
 
@@ -233,3 +241,5 @@ export const chatService = {
   },
 };
 
+export const chatFolders = getTodoFallback<ChatFolder[]>([]);
+export const promptSuggestions = getTodoFallback<PromptSuggestion[]>([]);
