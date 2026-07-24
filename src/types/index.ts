@@ -78,12 +78,6 @@ export interface ChatMessage {
   attachments?: Attachment[];
 }
 
-export interface ChatFolder {
-  id: string;
-  name: string;
-  count: number;
-}
-
 export interface Citation {
   id: string;
   title: string;
@@ -109,7 +103,6 @@ export interface ChatThread {
   favorite?: boolean;
   folder?: string;
   tags?: string[];
-  relatedQuestions?: string[];
   messages: ChatMessage[];
 }
 
