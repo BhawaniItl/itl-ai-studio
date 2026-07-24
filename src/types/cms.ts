@@ -181,3 +181,46 @@ export interface UploadedFile {
   status: "queued" | "uploading" | "done" | "error";
   error?: string;
 }
+
+
+/* ------------------------------------------------------------------------ */
+/* Generic CMS content pages — backed by FastAPI `/cms/pages` (route/title/  */
+/* content JSON blob). Distinct from PageConfig above, which drives the      */
+/* section-based visual Page Builder. This model backs the raw JSON Admin    */
+/* CMS editor: unlimited nesting, no page-specific shape.                    */
+/* ------------------------------------------------------------------------ */
+
+export type CmsJsonPrimitive = string | number | boolean | null;
+
+export interface CmsJsonObject {
+  [key: string]: CmsJsonValue;
+}
+
+export type CmsJsonArray = CmsJsonValue[];
+
+export type CmsJsonValue = CmsJsonPrimitive | CmsJsonArray | CmsJsonObject;
+
+export type CmsJsonType = "string" | "number" | "boolean" | "null" | "object" | "array";
+
+export type CmsPageStatus = "draft" | "published";
+
+export interface CmsContentPage {
+  id?: number;
+  route: string;
+  title: string;
+  content: CmsJsonObject;
+  status?: CmsPageStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CmsContentPageCreateInput {
+  route: string;
+  title: string;
+  content: CmsJsonObject;
+}
+
+export interface CmsContentPageUpdateInput {
+  title: string;
+  content: CmsJsonObject;
+}
