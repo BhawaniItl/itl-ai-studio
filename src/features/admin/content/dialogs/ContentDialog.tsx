@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,20 +34,7 @@ import {
 import { api, endpoints } from "@/services/api/api";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
 
-interface ContentFormValues {
-  book_id: string;
-  section_id: string;
-  title: string;
-  reference_no: string;
-  keywords: string;
-  summary: string;
-  status: string;
-  version: number;
-  content_html: string;
-  content_text: string;
-}
-
-interface ContentRecord {
+export interface ContentRecord {
   id: string;
   title: string;
   reference_no?: string;
@@ -80,10 +67,11 @@ const contentSchema = z.object({
   keywords: z.string().optional(),
   summary: z.string().optional(),
   status: z.string().min(1, "Status is required."),
-  version: z.coerce.number().int().min(1, "Version must be at least 1."),
+  version: z.string().regex(/^[1-9]\d*$/, "Version must be at least 1."),
   content_html: z.string().optional(),
   content_text: z.string().optional(),
 });
+type ContentFormValues = z.infer<typeof contentSchema>;
 
 export function ContentDialog({
   open,
@@ -96,24 +84,28 @@ export function ContentDialog({
   onOpenChange,
 }: ContentDialogProps) {
   const queryClient = useQueryClient();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const { data: contentDetail } = useQuery({
+    queryKey: ["book-content", content?.id],
+    queryFn: async () => (await api.get<ContentRecord>(endpoints.books.content(content!.id))).data,
+    enabled: open && Boolean(content?.id),
+  });
+  const currentContent = contentDetail ?? content;
   const form = useForm<ContentFormValues>({
     resolver: zodResolver(contentSchema),
     defaultValues: useMemo(
       () => ({
         book_id: bookId,
         section_id: sectionId,
-        title: content?.title ?? "",
-        reference_no: content?.reference_no ?? "",
-        keywords: content?.keywords ?? "",
-        summary: content?.summary ?? "",
-        status: content?.status ?? "ACTIVE",
-        version: content?.version ?? 1,
-        content_html: content?.content_html ?? content?.body ?? "",
-        content_text: content?.content_text ?? "",
+        title: currentContent?.title ?? "",
+        reference_no: currentContent?.reference_no ?? "",
+        keywords: currentContent?.keywords ?? "",
+        summary: currentContent?.summary ?? "",
+        status: currentContent?.status ?? "ACTIVE",
+        version: String(currentContent?.version ?? 1),
+        content_html: currentContent?.content_html ?? currentContent?.body ?? "",
+        content_text: currentContent?.content_text ?? "",
       }),
-      [bookId, content, sectionId],
+      [bookId, currentContent, sectionId],
     ),
   });
 
@@ -121,16 +113,16 @@ export function ContentDialog({
     form.reset({
       book_id: bookId,
       section_id: sectionId,
-      title: content?.title ?? "",
-      reference_no: content?.reference_no ?? "",
-      keywords: content?.keywords ?? "",
-      summary: content?.summary ?? "",
-      status: content?.status ?? "DRAFT",
-      version: content?.version ?? 1,
-      content_html: content?.content_html ?? content?.body ?? "",
-      content_text: content?.content_text ?? "",
+      title: currentContent?.title ?? "",
+      reference_no: currentContent?.reference_no ?? "",
+      keywords: currentContent?.keywords ?? "",
+      summary: currentContent?.summary ?? "",
+      status: currentContent?.status ?? "DRAFT",
+      version: String(currentContent?.version ?? 1),
+      content_html: currentContent?.content_html ?? currentContent?.body ?? "",
+      content_text: currentContent?.content_text ?? "",
     });
-  }, [bookId, content, form, sectionId]);
+  }, [bookId, currentContent, form, sectionId]);
 
   const mutation = useMutation({
     mutationFn: async (values: ContentFormValues) => {
@@ -162,15 +154,9 @@ export function ContentDialog({
     onError: () => {
       toast.error(mode === "edit" ? "Failed to update content." : "Failed to create content.");
     },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
   });
 
-  const onSubmit = async (values: ContentFormValues) => {
-    setIsSubmitting(true);
-    await mutation.mutateAsync(values);
-  };
+  const onSubmit = (values: ContentFormValues) => mutation.mutate(values);
 
   const isReadOnly = mode === "view";
 
@@ -343,8 +329,8 @@ export function ContentDialog({
                 {isReadOnly ? "Close" : "Cancel"}
               </Button>
               {!isReadOnly && (
-                <Button type="submit" disabled={isSubmitting || mutation.isPending}>
-                  {isSubmitting || mutation.isPending
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending
                     ? "Saving..."
                     : mode === "edit"
                       ? "Save Changes"

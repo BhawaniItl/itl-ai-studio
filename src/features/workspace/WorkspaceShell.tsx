@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { PanelLeftOpen, PanelRightOpen, Share2, MoreHorizontal, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,25 @@ import { useSidebarStore, useWorkspaceStore, useChatStore } from "@/store";
 import { useWorkspaceModules } from "@/hooks";
 import { chatService } from "@/services/workspace.service";
 import { cn } from "@/lib/utils";
+import type { ChatMessage } from "@/types";
+
+const ERROR_MESSAGE_CONTENT = "⚠ Unable to generate a response.\n\nPlease try again.";
+
+const createOptimisticMessage = (content: string): ChatMessage => ({
+  id: `local-${crypto.randomUUID()}`,
+  role: "user",
+  content,
+  createdAt: new Date().toISOString(),
+  status: "pending",
+});
+
+const createErrorMessage = (): ChatMessage => ({
+  id: `local-${crypto.randomUUID()}`,
+  role: "assistant",
+  content: ERROR_MESSAGE_CONTENT,
+  createdAt: new Date().toISOString(),
+  status: "error",
+});
 
 export function WorkspaceShell() {
   const leftOpen = useSidebarStore((s) => s.leftOpen);
@@ -23,62 +43,185 @@ export function WorkspaceShell() {
   const activeToolId = useWorkspaceStore((s) => s.activeToolId);
   const setTool = useWorkspaceStore((s) => s.setTool);
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
+  const setThread = useWorkspaceStore((s) => s.setThread);
+
   const { data: modules } = useWorkspaceModules();
+
   const threads = useChatStore((s) => s.threads);
   const addMessage = useChatStore((s) => s.addMessage);
+  const replaceMessage = useChatStore((s) => s.replaceMessage);
+  const createThread = useChatStore((s) => s.createThread);
+  const deleteThread = useChatStore((s) => s.deleteThread);
   const upsertThread = useChatStore((s) => s.upsertThread);
 
   const activeModule = modules?.find((m) => m.id === activeModuleId);
-  const thread = threads.find((t) => t.id === activeThreadId) ?? null;
+  const activeTool = activeModule?.tools.find((t) => t.id === activeToolId);
+  const thread = useMemo(
+    () => threads.find((t) => t.id === activeThreadId) ?? null,
+    [threads, activeThreadId],
+  );
 
-  const [streaming, setStreaming] = useState(false);
+  // "sending" covers the single request/response round trip. Kept separate from
+  // transport concerns so a future SSE/WebSocket implementation only needs to
+  // change how these flags get flipped, not anything that reads them.
+  const [isSending, setIsSending] = useState(false);
+  const submissionInFlight = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  async function handleSend(prompt: string) {
-    if (!thread && !activeThreadId) {
-      setStreaming(true);
-      try {
-        const { message, thread: backendThread } = await chatService.sendMessage(null, prompt, {
-          moduleId: activeModuleId,
-          toolId: activeToolId,
+  // If the user switches Module or Tool while a request is still in flight,
+  // that request now belongs to a workspace they've navigated away from —
+  // abort it. handleSend's catch block checks `aborted` and skips showing
+  // an error bubble for this case (it's not a failure, it's a cancellation).
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeModuleId, activeToolId]);
+
+  // Tracks which thread ids we've already requested full message history for,
+  // so we don't refetch on every render and don't confuse "genuinely empty
+  // brand-new thread" with "history not loaded yet".
+  const loadingHistoryFor = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!thread) return;
+    if (thread.hasLoadedMessages) return;
+    if (thread.id.startsWith("local-")) return; // optimistic thread, nothing to fetch yet
+    if (loadingHistoryFor.current.has(thread.id)) return;
+
+    loadingHistoryFor.current.add(thread.id);
+
+    chatService
+      .getThread(thread.id)
+      .then((fullThread) => {
+        if (fullThread) {
+          upsertThread(fullThread);
+        }
+      })
+      .catch(() => {
+        // Leave the thread as-is; the user can still send new messages.
+      })
+      .finally(() => {
+        loadingHistoryFor.current.delete(thread.id);
+      });
+  }, [thread, upsertThread]);
+
+  // ------------------------------------------------------------------
+  // Auto-scroll — fires on every state change that can move the bottom
+  // of the message list: new user message, new assistant reply,
+  // switching conversations, and the thinking indicator appearing/disappearing.
+  // ------------------------------------------------------------------
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    scrollAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [thread?.id, thread?.messages.length, isSending]);
+
+  const handleSend = useCallback(
+    async (prompt: string) => {
+      if (submissionInFlight.current) return;
+      if (activeTool?.disabled) return; // composer is disabled for these too; this is a hard backstop
+      submissionInFlight.current = true;
+
+      // Snapshot the workspace this message is being sent in. If the user
+      // switches module/tool before the response comes back, we still want
+      // the conversation saved correctly — we just must not yank them back
+      // into a workspace they've since navigated away from.
+      const requestModuleId = activeModuleId;
+      const requestToolId = activeToolId;
+      const isSameWorkspace = () => {
+        const live = useWorkspaceStore.getState();
+        return live.activeModuleId === requestModuleId && live.activeToolId === requestToolId;
+      };
+
+      const isNewConversation = !thread;
+      const optimisticUserMessage = createOptimisticMessage(prompt);
+
+      // Optimistic UI: the user's message appears instantly, before the backend
+      // has even been asked. New conversations switch to their (temporary) thread
+      // immediately rather than waiting on a round trip.
+      let localThreadId = thread?.id ?? null;
+      if (isNewConversation) {
+        localThreadId = `local-${crypto.randomUUID()}`;
+        createThread({
+          id: localThreadId,
+          title: prompt.slice(0, 60),
+          moduleId: requestModuleId,
+          toolId: requestToolId,
+          updatedAt: new Date().toISOString(),
+          messages: [optimisticUserMessage],
+          hasLoadedMessages: true,
         });
-        if (backendThread) {
-          upsertThread(backendThread);
+        setThread(localThreadId);
+      } else {
+        addMessage(localThreadId!, optimisticUserMessage);
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      setIsSending(true);
+      try {
+        const backendConversationId = isNewConversation ? null : localThreadId;
+        const { userMessage, assistantMessage, thread: backendThread } = await chatService.sendMessage(
+          backendConversationId,
+          prompt,
+          { moduleId: requestModuleId, toolId: requestToolId },
+          controller.signal,
+        );
+
+        if (isNewConversation && backendThread) {
+          // Swap the temporary local thread for the real, backend-assigned one.
+          deleteThread(localThreadId!);
+          upsertThread({ ...backendThread, messages: [userMessage, assistantMessage], hasLoadedMessages: true });
+          // Only force-navigate if the user is still looking at the workspace
+          // this reply belongs to — otherwise it just quietly lands in the
+          // sidebar for whenever they come back to it.
+          if (isSameWorkspace()) setThread(backendThread.id);
+        } else if (localThreadId) {
+          replaceMessage(localThreadId, optimisticUserMessage.id, userMessage);
+          addMessage(localThreadId, assistantMessage);
+          if (backendThread) {
+            // Metadata only (title/updatedAt) — messages are omitted so the
+            // store's merge logic preserves what's already on screen.
+            upsertThread({ id: backendThread.id, title: backendThread.title, updatedAt: backendThread.updatedAt });
+          }
         }
-        if (backendThread?.id) {
-          useWorkspaceStore.getState().setThread(backendThread.id);
+      } catch (error) {
+        if (axios.isCancel(error)) {
+          // User navigated away from this workspace — not a failure, no error bubble.
+          return;
         }
-        if (backendThread) {
-          addMessage(backendThread.id, message);
+        if (localThreadId) {
+          if (isNewConversation) {
+            // Keep the optimistic message but mark it settled so it doesn't look
+            // permanently "pending"; the conversation only really exists locally
+            // until a message succeeds, but we still surface the failure in place.
+            replaceMessage(localThreadId, optimisticUserMessage.id, { ...optimisticUserMessage, status: undefined });
+          }
+          addMessage(localThreadId, createErrorMessage());
         }
       } finally {
-        setStreaming(false);
+        setIsSending(false);
+        submissionInFlight.current = false;
+        if (abortControllerRef.current === controller) {
+          abortControllerRef.current = null;
+        }
       }
-      return;
-    }
-
-    if (!thread) return;
-
-    addMessage(thread.id, {
-      id: crypto.randomUUID(),
-      role: "user",
-      content: prompt,
-      createdAt: new Date().toISOString(),
-    });
-
-    setStreaming(true);
-    try {
-      const { message, thread: backendThread } = await chatService.sendMessage(thread.id, prompt, {
-        moduleId: activeModuleId,
-        toolId: activeToolId,
-      });
-      if (backendThread) {
-        upsertThread(backendThread);
-      }
-      addMessage(thread.id, message);
-    } finally {
-      setStreaming(false);
-    }
-  }
+    },
+    [
+      thread,
+      activeModuleId,
+      activeToolId,
+      activeTool,
+      createThread,
+      setThread,
+      addMessage,
+      deleteThread,
+      upsertThread,
+      replaceMessage,
+    ],
+  );
 
   return (
     <div
@@ -94,9 +237,9 @@ export function WorkspaceShell() {
       </div>
 
       {/* Main */}
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-h-0 min-w-0 flex-col">
         {/* Header */}
-        <header className="flex h-14 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/60 bg-background/80 px-4 backdrop-blur">
           <div className="flex min-w-0 items-center gap-2">
             {!leftOpen && (
               <Button variant="ghost" size="icon" onClick={toggleLeft} className="h-8 w-8">
@@ -123,12 +266,16 @@ export function WorkspaceShell() {
               {(activeModule?.tools ?? []).map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => setTool(t.id)}
+                  onClick={() => !t.disabled && setTool(t.id)}
+                  disabled={t.disabled}
+                  title={t.disabled ? t.disabledReason ?? "Coming soon" : undefined}
                   className={cn(
                     "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
-                    activeToolId === t.id
-                      ? "bg-card text-foreground shadow-soft"
-                      : "text-muted-foreground hover:text-foreground",
+                    t.disabled
+                      ? "cursor-not-allowed text-muted-foreground/40"
+                      : activeToolId === t.id
+                        ? "bg-card text-foreground shadow-soft"
+                        : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <Icon name={t.icon} className="h-3 w-3" />
@@ -150,15 +297,16 @@ export function WorkspaceShell() {
           </div>
         </header>
 
-        {/* Messages */}
-        <div className="scrollbar-thin flex-1 overflow-y-auto">
+        {/* Messages — the only independently scrolling region in this column */}
+        <div className="scrollbar-thin min-h-0 flex-1 overflow-y-auto">
           <div className="mx-auto max-w-3xl px-4 py-8">
             {thread && thread.messages.length > 0 ? (
               <div className="space-y-5">
                 {thread.messages.map((m) => (
                   <ChatMessageBubble key={m.id} message={m} />
                 ))}
-                {streaming && <TypingIndicator />}
+                {isSending && <TypingIndicator />}
+                <div ref={scrollAnchorRef} />
               </div>
             ) : (
               <EmptyState moduleName={activeModule?.name ?? ""} />
@@ -166,16 +314,21 @@ export function WorkspaceShell() {
           </div>
         </div>
 
-        {/* Composer */}
-        <div className="border-t border-border/60 bg-background/60 px-4 pb-5 pt-4 backdrop-blur">
+        {/* Composer — always pinned, never scrolls */}
+        <div className="shrink-0 border-t border-border/60 bg-background/60 px-4 pb-5 pt-4 backdrop-blur">
           <div className="mx-auto max-w-3xl">
-            <PromptComposer onSend={handleSend} isStreaming={streaming} />
+            <PromptComposer
+              onSend={handleSend}
+              isStreaming={isSending}
+              disabled={activeTool?.disabled}
+              disabledReason={activeTool?.disabledReason}
+            />
           </div>
         </div>
       </div>
 
       <div className={cn("overflow-hidden", !rightOpen && "invisible")}>
-        {rightOpen && <ContextPanel />}
+        {rightOpen && <ContextPanel thread={thread} />}
       </div>
     </div>
   );

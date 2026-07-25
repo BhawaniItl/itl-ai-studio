@@ -6,6 +6,8 @@
  * implementation to switch to a real backend.
  */
 import { useAuthStore } from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
+import { useWorkspaceStore } from "@/store/workspaceStore";
 import axios, {
   type AxiosInstance,
   type AxiosRequestConfig,
@@ -47,6 +49,7 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
     (res) => res,
     async (error: AxiosError) => {
       const original = error.config as AxiosRequestConfig & { _retry?: boolean };
+
       if (error.response?.status === 401 && original && !original._retry) {
         original._retry = true;
         const fresh = await refreshAuthToken();
@@ -54,7 +57,22 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
           original.headers.Authorization = `Bearer ${fresh}`;
           return instance.request(original);
         }
+
+        // No refresh mechanism exists yet (`refreshAuthToken` is a stub),
+        // so a 401 here always means the session is gone — expired (backend
+        // sessions time out after 8h), invalidated (logging in elsewhere
+        // invalidates prior sessions), or was never present. Previously this
+        // just rejected silently: every /ai/* call in the workspace (message
+        // list, send, etc.) would fail with no explanation and no way back
+        // to a working state short of manually clearing storage.
+        useAuthStore.getState().clear();
+        useChatStore.getState().reset();
+        useWorkspaceStore.getState().reset();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+          window.location.assign("/login");
+        }
       }
+
       return Promise.reject(error);
     },
   );
@@ -203,6 +221,8 @@ export const endpoints = {
     embed: "/ai/embed",
     tools: "/ai/tools",
     models: "/ai/models",
+    conversations: "/ai/conversations",
+    conversation: (id: string) => `/ai/conversations/${id}`,
   },
   books: {
     list: "/admin/books",

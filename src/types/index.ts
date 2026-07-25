@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export interface HeroData {
   eyebrow: string;
   title: string;
@@ -67,6 +68,9 @@ export interface WorkspaceTool {
   name: string;
   icon: string;
   description: string;
+  /** True when the vendor hasn't provided a working backend for this tool yet. */
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export interface ChatMessage {
@@ -76,6 +80,8 @@ export interface ChatMessage {
   createdAt: string;
   citations?: Citation[];
   attachments?: Attachment[];
+  /** Local-only lifecycle state for optimistic UI. Absent = already settled. */
+  status?: "pending" | "error";
 }
 
 export interface Citation {
@@ -104,6 +110,8 @@ export interface ChatThread {
   folder?: string;
   tags?: string[];
   messages: ChatMessage[];
+  /** True once full message history has been fetched from the backend for this thread. */
+  hasLoadedMessages?: boolean;
 }
 
 export interface PromptSuggestion {

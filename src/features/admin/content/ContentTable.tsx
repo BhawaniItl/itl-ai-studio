@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Eye, FileText, Pencil, Plus, RefreshCcw, Search, Trash2 } from "lucide-react";
 
@@ -23,13 +23,13 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, endpoints } from "@/services/api/api";
 
-interface SectionSummary {
+export interface SectionSummary {
   id: string;
   title: string;
   status?: string;
 }
 
-interface ContentItem {
+export interface ContentItem {
   id: string;
   title: string;
   reference_no?: string;
@@ -53,16 +53,18 @@ async function fetchContents(
   search: string,
   status: string,
 ) {
-  const { data } = await api.get(endpoints.books.contentsBySection(sectionId), {
+  const { data } = await api.get<{ items?: ContentItem[]; results?: ContentItem[]; total?: number }>(endpoints.books.contents, {
     params: {
       page,
       limit,
+      section_id: sectionId,
       search: search || undefined,
       status: status === "ALL" ? undefined : status,
     },
   });
 
-  return data;
+  const items = data.items ?? data.results ?? [];
+  return { items, total: data.total ?? items.length };
 }
 
 function formatUpdated(value?: string) {
@@ -86,6 +88,9 @@ export function ContentTable({
   const limit = 10;
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("ALL");
+
+  // Section changes represent a new result set, so pagination must start over.
+  useEffect(() => { setPage(1); }, [selectedSection?.id, search, status]);
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["section-contents", selectedSection?.id, page, limit, search, status],

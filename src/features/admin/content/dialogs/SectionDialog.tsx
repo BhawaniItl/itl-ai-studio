@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -33,16 +33,7 @@ import {
 } from "@/components/ui/select";
 import { api, endpoints } from "@/services/api/api";
 
-interface SectionFormValues {
-  title: string;
-  slug: string;
-  description: string;
-  parent_id: string;
-  status: string;
-  sort_order: number;
-}
-
-interface SectionRecord {
+export interface SectionRecord {
   id: string;
   title: string;
   slug?: string;
@@ -69,8 +60,9 @@ const sectionSchema = z.object({
   description: z.string().optional(),
   parent_id: z.string().optional(),
   status: z.string().min(1, "Status is required."),
-  sort_order: z.coerce.number().int().min(0, "Sort order must be zero or greater."),
+  sort_order: z.string().regex(/^\d+$/, "Sort order must be a whole number."),
 });
+type SectionFormValues = z.infer<typeof sectionSchema>;
 
 function slugify(value: string) {
   return value
@@ -92,8 +84,6 @@ export function SectionDialog({
 }: SectionDialogProps) {
   const queryClient = useQueryClient();
   const isEdit = mode === "edit";
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const form = useForm<SectionFormValues>({
     resolver: zodResolver(sectionSchema),
     defaultValues: useMemo(
@@ -103,7 +93,7 @@ export function SectionDialog({
         description: section?.description ?? "",
         parent_id: section?.parent_id ?? "",
         status: section?.status ?? "DRAFT",
-        sort_order: section?.sort_order ?? 0,
+        sort_order: String(section?.sort_order ?? 0),
       }),
       [section],
     ),
@@ -116,7 +106,7 @@ export function SectionDialog({
       description: section?.description ?? "",
       parent_id: section?.parent_id ?? "",
       status: isEdit ? (section?.status ?? "ACTIVE") : "ACTIVE",
-      sort_order: section?.sort_order ?? 0,
+      sort_order: String(section?.sort_order ?? 0),
     });
   }, [form, isEdit, section]);
 
@@ -165,15 +155,11 @@ export function SectionDialog({
     onError: () => {
       toast.error(mode === "edit" ? "Failed to update section." : "Failed to create section.");
     },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
   });
 
-  const onSubmit = async (values: SectionFormValues) => {
-    setIsSubmitting(true);
-    await mutation.mutateAsync(values);
-  };
+  const onSubmit = (values: SectionFormValues) => mutation.mutate(values);
+
+  const flatParentOptions = useMemo(() => flattenSections(parentOptions).filter((item) => item.id !== section?.id), [parentOptions, section?.id]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -267,15 +253,15 @@ export function SectionDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Parent Section</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                    <Select onValueChange={(value) => field.onChange(value === "ROOT" ? "" : value)} value={field.value || "ROOT"}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Root section" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Root Section</SelectItem>
-                        {parentOptions.map((item) => (
+                        <SelectItem value="ROOT">Root Section</SelectItem>
+                        {flatParentOptions.map((item) => (
                           <SelectItem key={item.id} value={item.id}>
                             {item.title}
                           </SelectItem>
@@ -306,8 +292,8 @@ export function SectionDialog({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || mutation.isPending}>
-                {isSubmitting || mutation.isPending
+              <Button type="submit" disabled={mutation.isPending}>
+                {mutation.isPending
                   ? "Saving..."
                   : mode === "edit"
                     ? "Save Changes"
@@ -319,4 +305,8 @@ export function SectionDialog({
       </DialogContent>
     </Dialog>
   );
+}
+
+function flattenSections(sections: SectionRecord[]): SectionRecord[] {
+  return sections.flatMap((section) => [section, ...flattenSections(section.children ?? [])]);
 }

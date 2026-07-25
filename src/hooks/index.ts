@@ -28,8 +28,11 @@ export const useWorkspaceModules = () =>
   useQuery({ queryKey: ["workspace", "modules"], queryFn: () => workspaceService.getModules() });
 export const usePromptSuggestions = (moduleId?: string) =>
   useQuery({ queryKey: ["workspace", "suggestions", moduleId], queryFn: () => workspaceService.getSuggestions(moduleId) });
-export const useChatThreads = () =>
-  useQuery({ queryKey: ["chat", "threads"], queryFn: () => chatService.listThreads() });
+export const useChatThreads = (moduleId: string, toolId: string) =>
+  useQuery({
+    queryKey: ["chat", "threads", moduleId, toolId],
+    queryFn: () => chatService.listThreads(moduleId, toolId),
+  });
 export const useChatFolders = () =>
   useQuery({ queryKey: ["chat", "folders"], queryFn: () => workspaceService.getFolders() });
 
