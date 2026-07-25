@@ -17,8 +17,16 @@ import type { ChatMessage } from "@/types";
 
 const ERROR_MESSAGE_CONTENT = "⚠ Unable to generate a response.\n\nPlease try again.";
 
+const generateUUID = () => {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+};
+
 const createOptimisticMessage = (content: string): ChatMessage => ({
-  id: `local-${crypto.randomUUID()}`,
+  id: `local-${generateUUID()}`,
   role: "user",
   content,
   createdAt: new Date().toISOString(),
@@ -26,7 +34,7 @@ const createOptimisticMessage = (content: string): ChatMessage => ({
 });
 
 const createErrorMessage = (): ChatMessage => ({
-  id: `local-${crypto.randomUUID()}`,
+  id: `local-${generateUUID()}`,
   role: "assistant",
   content: ERROR_MESSAGE_CONTENT,
   createdAt: new Date().toISOString(),
@@ -142,7 +150,7 @@ export function WorkspaceShell() {
       // immediately rather than waiting on a round trip.
       let localThreadId = thread?.id ?? null;
       if (isNewConversation) {
-        localThreadId = `local-${crypto.randomUUID()}`;
+        localThreadId = `local-${generateUUID()}`;
         createThread({
           id: localThreadId,
           title: prompt.slice(0, 60),
