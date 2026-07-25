@@ -464,6 +464,10 @@ export default function AdminContentPage() {
         selectedBook,
     ]);
 
+    useEffect(() => {
+        setPage(1);
+    }, [search, status]);
+
     const expandAllSections = () => {
         setExpanded((prev) => {
             const nextState = Object.fromEntries(
@@ -984,7 +988,7 @@ export default function AdminContentPage() {
                         <Button
                             size="sm"
                             variant="secondary"
-                            disabled={!selectedBook}
+                            disabled={!selectedSection}
                             onClick={openCreateContentDialog}
                         >
 
@@ -1264,6 +1268,11 @@ export default function AdminContentPage() {
                 mode={bookDialogMode}
                 book={editingBook}
                 onOpenChange={setBookDialogOpen}
+                onSaved={(book) => setSelectedBook((current) => ({
+                    ...(current ?? { created_at: "", updated_at: "" }),
+                    ...book,
+                    description: book.description ?? undefined,
+                }))}
             />
 
             <SectionDialog

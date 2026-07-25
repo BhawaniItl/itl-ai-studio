@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   Plus,
   Search,
@@ -11,7 +11,7 @@ import {
   LogOut,
   ChevronsLeft,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { Logo } from "@/components/common/Logo";
 import { Icon } from "@/components/common/Icon";
@@ -19,33 +19,69 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useChatFolders, useChatThreads, useWorkspaceModules } from "@/hooks";
+import { useCurrentUser } from "@/hooks/useAuth";
 import { useWorkspaceStore, useSidebarStore, useChatStore } from "@/store";
+import { authService } from "@/services/auth.service";
+import type { ChatThread } from "@/types";
 
 export function WorkspaceSidebar() {
   const [query, setQuery] = useState("");
+  const navigate = useNavigate();
+  const currentUser = useCurrentUser();
   const threads = useChatStore((s) => s.threads);
-  const replaceThreads = useChatStore((s) => s.replaceThreads);
+  const setThreadsForScope = useChatStore((s) => s.setThreadsForScope);
   const { data: folders } = useChatFolders();
   const { data: modules } = useWorkspaceModules();
-  const { data: threadList } = useChatThreads();
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
+  const activeToolId = useWorkspaceStore((s) => s.activeToolId);
   const setModule = useWorkspaceStore((s) => s.setModule);
   const activeThreadId = useWorkspaceStore((s) => s.activeThreadId);
   const setThread = useWorkspaceStore((s) => s.setThread);
   const toggleLeft = useSidebarStore((s) => s.toggleLeft);
+  const { data: threadList, isSuccess: threadsLoaded } = useChatThreads(activeModuleId, activeToolId);
 
+  // Refetches and re-syncs every time the active Module+Tool workspace changes —
+  // each combination is an independent namespace with its own history.
   useEffect(() => {
-    if (threadList && threadList.length > 0) {
-      replaceThreads(threadList);
-      if (!activeThreadId) {
-        setThread(threadList[0].id);
-      }
+    if (threadsLoaded && threadList) {
+      setThreadsForScope(activeModuleId, activeToolId, threadList);
     }
-  }, [activeThreadId, replaceThreads, setThread, threadList]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadsLoaded, threadList, activeModuleId, activeToolId]);
 
-  const filtered = (threads ?? []).filter(
+  const handleNewChat = () => setThread(null);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      useChatStore.getState().reset();
+      useWorkspaceStore.getState().reset();
+      navigate({ to: "/login" });
+    }
+  };
+
+  const displayName = currentUser?.name || currentUser?.email || "Account";
+  const initials =
+    (currentUser?.name ?? currentUser?.email ?? "?")
+      .trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "?";
+
+  // Single source of truth for ordering: always derive from `updatedAt`,
+  // never rely on array insertion order. Newest conversation is always first.
+  const sorted = useMemo(
+    () => [...threads].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    [threads],
+  );
+
+  const filtered = sorted.filter(
     (t) =>
       t.moduleId === activeModuleId &&
+      t.toolId === activeToolId &&
       (query ? t.title.toLowerCase().includes(query.toLowerCase()) : true),
   );
 
@@ -83,7 +119,10 @@ export function WorkspaceSidebar() {
       </div>
 
       <div className="p-3">
-        <Button className="w-full gap-2 gradient-primary text-primary-foreground shadow-soft">
+        <Button
+          onClick={handleNewChat}
+          className="w-full gap-2 gradient-primary text-primary-foreground shadow-soft"
+        >
           <Plus className="h-4 w-4" /> New chat
         </Button>
       </div>
@@ -100,7 +139,7 @@ export function WorkspaceSidebar() {
         </div>
       </div>
 
-      <nav className="scrollbar-thin mt-3 flex-1 space-y-4 overflow-y-auto px-2 pb-2">
+      <nav className="scrollbar-thin mt-3 min-h-0 flex-1 space-y-4 overflow-y-auto px-2 pb-2">
         {pinned.length > 0 && (
           <ThreadGroup title="Pinned" items={pinned} activeId={activeThreadId} onSelect={setThread} />
         )}
@@ -125,21 +164,28 @@ export function WorkspaceSidebar() {
           </div>
         )}
         <ThreadGroup title="Recent" items={recent} activeId={activeThreadId} onSelect={setThread} />
+        {filtered.length === 0 && (
+          <p className="px-2 text-[12px] text-muted-foreground">
+            {query ? "No chats match your search." : "No conversations yet — start one below."}
+          </p>
+        )}
       </nav>
 
       <div className="border-t border-border/60 p-3">
         <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/60 p-2">
           <div className="grid h-8 w-8 place-items-center rounded-full gradient-primary text-xs font-bold text-primary-foreground">
-            DU
+            {initials}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">CA Demo User</p>
-            <p className="truncate text-[11px] text-muted-foreground">Professional · Pro plan</p>
+            <p className="truncate text-sm font-semibold">{displayName}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              {currentUser?.firm ? currentUser.firm : currentUser?.plan ? `${currentUser.plan} plan` : currentUser?.email}
+            </p>
           </div>
           <Button variant="ghost" size="icon" className="h-7 w-7">
             <Settings className="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleLogout} aria-label="Log out">
             <LogOut className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -155,7 +201,7 @@ function ThreadGroup({
   onSelect,
 }: {
   title: string;
-  items: { id: string; title: string; updatedAt: string; pinned?: boolean; favorite?: boolean }[];
+  items: ChatThread[];
   activeId: string | null;
   onSelect: (id: string) => void;
 }) {
@@ -178,7 +224,11 @@ function ThreadGroup({
               )}
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-medium">{t.title}</p>
+                <p className="truncate text-[13px] font-medium">
+                  {/* Backend title falls back to first prompt client-side until the
+                      server assigns a real one, so this is never stuck on "New Chat". */}
+                  {t.title}
+                </p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
                   {dayjs(t.updatedAt).format("MMM D, HH:mm")}
                 </p>

@@ -1,12 +1,38 @@
 /* eslint-disable prettier/prettier */
 import { isAxiosError } from "axios";
 import { api, endpoints } from "./api/api";
-import { chatFolders, promptSuggestions, workspaceModules } from "@/mock/workspace";
-import type { Attachment, ChatFolder, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
+import { promptSuggestions, workspaceModules } from "@/mock/workspace";
+import type { Attachment, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
+
+/**
+ * Maps a workspace tool to the `tool` value the backend's /ai/query expects.
+ * The vendor doesn't distinguish Income Tax vs GST at the API level (same
+ * endpoint serves both — module is purely an app-side namespace), so this
+ * only needs to vary by tool, never by module.
+ *
+ * Tools not listed here have no working backend yet (see mock/workspace.ts
+ * `disabled` flags) — sendMessage() refuses to call for them rather than
+ * silently falling back to Ask Bot.
+ */
+const TOOL_BACKEND_TOOL_MAP: Record<string, string> = {
+  ask: "chat",
+  "case-law": "case-laws",
+};
+
+const BACKEND_TOOL_TO_UI_TOOL_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(TOOL_BACKEND_TOOL_MAP).map(([uiTool, backendTool]) => [backendTool, uiTool]),
+);
 
 interface AiQueryContext {
-  moduleId?: string;
-  toolId?: string;
+  moduleId: string;
+  toolId: string;
+}
+
+/** Generic `{ success, message, data }` envelope every /ai/* route returns. */
+interface ApiEnvelope<T> {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
 interface BackendCitation {
@@ -18,153 +44,131 @@ interface BackendCitation {
   source_type?: string;
   sourceType?: string;
   url?: string;
+  heading?: string;
+  reference?: string;
+  link?: string;
+  document_type?: string;
 }
 
+/** Shape returned by ChatService.serialize_message on the backend. */
 interface BackendMessage {
-  id?: string | number;
-  role?: "user" | "assistant" | "system";
-  content?: string;
-  created_at?: string;
-  createdAt?: string;
-  citations?: BackendCitation[];
-  sources?: BackendCitation[];
-  references?: BackendCitation[];
-  attachments?: Attachment[];
-}
-
-interface BackendThread {
-  id?: string | number;
-  title?: string;
-  module_id?: string;
-  moduleId?: string;
-  tool_id?: string;
-  toolId?: string;
-  updated_at?: string;
-  updatedAt?: string;
-  pinned?: boolean;
-  favorite?: boolean;
-  folder?: string;
-  tags?: string[];
-  messages?: BackendMessage[];
-}
-
-interface BackendAssistantMessage {
-  id: number;
-  answer: string;
-  confidence: number;
-  query_time_ms: number;
-  sources: BackendCitation[];
-  related_judgements?: unknown[];
-  verification?: unknown;
-  pipeline?: unknown;
+  id: number | string;
+  parent_message_id?: number | string | null;
+  role: "user" | "assistant" | "system";
+  message_type?: string;
+  status?: string;
+  content?: string | null;
+  confidence?: number | null;
+  query_time_ms?: number | null;
+  sources?: BackendCitation[] | null;
+  related_judgements?: unknown[] | null;
   created_at: string;
 }
 
-interface BackendAiQueryResponse {
-  success: boolean;
-  message: string;
-  data: {
-    conversation: BackendThread;
-    user_message: {
-      id: number;
-      query: string;
-      created_at: string;
-    };
-    assistant_message: BackendAssistantMessage;
+/** Shape returned by ChatService.serialize_conversation on the backend. */
+interface BackendConversation {
+  id: number | string;
+  title?: string;
+  provider?: string;
+  tool?: string;
+  module?: string | null;
+  status?: string;
+  is_archived?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  last_message_at?: string | null;
+  messages?: BackendMessage[];
+}
+
+/** Shape of the `data` field returned by POST /ai/query. */
+interface BackendQueryResult {
+  conversation: BackendConversation;
+  user_message: {
+    id: number | string;
+    query: string;
+    created_at: string;
+  };
+  assistant_message: {
+    id: number | string;
+    answer: string;
+    confidence?: number | null;
+    query_time_ms?: number | null;
+    sources?: BackendCitation[] | null;
+    related_judgements?: unknown[] | null;
+    verification?: unknown;
+    pipeline?: unknown;
+    created_at: string;
   };
 }
 
 const normalizeCitation = (citation: BackendCitation, index: number): Citation => {
-  const type = citation.type ?? citation.source_type ?? citation.sourceType ?? "act";
+  const type = citation.type ?? citation.source_type ?? citation.sourceType ?? citation.document_type ?? "act";
   return {
-    id: citation.id ?? `${type}-${index}-${citation.title ?? "item"}`,
-    title: citation.title ?? "Untitled source",
-    type: type === "case" || type === "act" || type === "circular" || type === "notification"
-      ? type
-      : "act",
-    ref: citation.ref ?? citation.url ?? "Source",
+    id: citation.id ? String(citation.id) : `${type}-${index}-${citation.title ?? citation.heading ?? "item"}`,
+    title: citation.title ?? citation.heading ?? "Untitled source",
+    type:
+      type === "case" || type === "act" || type === "circular" || type === "notification"
+        ? type
+        : "act",
+    ref: citation.ref ?? citation.reference ?? citation.url ?? citation.link ?? "Source",
     snippet: citation.snippet,
   };
 };
 
-const normalizeMessage = (
-  message: BackendMessage,
-  fallbackRole: ChatMessage["role"] = "assistant",
-): ChatMessage => {
-  const rawSources =
-    message.sources ?? message.citations ?? message.references ?? [];
+const normalizeCitations = (sources: BackendCitation[] | null | undefined): Citation[] =>
+  (sources ?? []).map((source, index) => normalizeCitation(source, index));
 
-  return {
-    id: String(message.id ?? crypto.randomUUID()),
-    role: message.role ?? fallbackRole,
-    content: message.content ?? "",
-    createdAt:
-      message.createdAt ??
-      message.created_at ??
-      new Date().toISOString(),
-    citations: rawSources.map((source, index) =>
-      normalizeCitation(source, index)
-    ),
-    attachments: message.attachments ?? [],
-  };
-};
+/** Normalizes a message that already came pre-shaped from the backend's `serialize_message`. */
+const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
+  id: String(message.id),
+  role: message.role,
+  content: message.content ?? "",
+  createdAt: message.created_at,
+  citations: normalizeCitations(message.sources),
+  attachments: [],
+});
 
 const normalizeThread = (
-  thread: BackendThread | null | undefined
+  conversation: BackendConversation | null | undefined,
+  overrides: { moduleId?: string; toolId?: string } = {},
 ): ChatThread | null => {
-  if (!thread || thread.id == null) return null;
+  if (!conversation || conversation.id == null) return null;
+
+  const hasMessages = Array.isArray(conversation.messages);
 
   return {
-    id: String(thread.id),
-    title: thread.title ?? "New chat",
-    moduleId: thread.moduleId ?? thread.module_id ?? "income-tax",
-    toolId: thread.toolId ?? thread.tool_id ?? "ask",
+    id: String(conversation.id),
+    title: conversation.title || "New chat",
+    // The backend is the source of truth once it has a value — the previous
+    // implementation always fell back to "income-tax" regardless of what the
+    // conversation actually was, which is why GST conversations kept showing
+    // up under the Income Tax module.
+    moduleId: conversation.module ?? overrides.moduleId ?? "gst",
+    toolId: (conversation.tool && BACKEND_TOOL_TO_UI_TOOL_MAP[conversation.tool]) ?? overrides.toolId ?? "ask",
     updatedAt:
-      thread.updatedAt ??
-      thread.updated_at ??
-      new Date().toISOString(),
-    pinned: thread.pinned,
-    favorite: thread.favorite,
-    folder: thread.folder,
-    tags: thread.tags,
-    messages: (thread.messages ?? []).map((message) =>
-      normalizeMessage(message)
-    ),
+      conversation.last_message_at ?? conversation.updated_at ?? new Date().toISOString(),
+    messages: hasMessages ? conversation.messages!.map(normalizeStoredMessage) : [],
+    // Only present when this thread came from a full detail fetch (GET /ai/conversations/{id}),
+    // so WorkspaceShell knows whether it still needs to load message history.
+    hasLoadedMessages: hasMessages || undefined,
   };
 };
-
-const getThreadPayload = (data: unknown): BackendThread[] => {
-  if (Array.isArray(data)) return data as BackendThread[];
-  if (data && typeof data === "object" && Array.isArray((data as { threads?: BackendThread[] }).threads)) {
-    return (data as { threads: BackendThread[] }).threads;
-  }
-  return [];
-};
-
-const getTodoFallback = <T>(value: T): T => value;
 
 export const workspaceService = {
   getModules: () => Promise.resolve(workspaceModules),
-  getFolders: async (): Promise<ChatFolder[]> => {
-    try {
-      const { data } = await api.get<ChatFolder[]>(endpoints.chat.folders);
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
-        // TODO: replace with backend folders endpoint when available.
-        return [];
-      }
-      throw error;
-    }
+  getFolders: async () => {
+    // No backend folders endpoint exists yet. Folders are a future feature;
+    // returning an empty list keeps the sidebar's optional folder section hidden.
+    return [] as { id: string; name: string; count: number }[];
   },
-  getSuggestions: async (): Promise<PromptSuggestion[]> => {
+  getSuggestions: async (_moduleId?: string): Promise<PromptSuggestion[]> => {
     try {
       const { data } = await api.get<PromptSuggestion[]>(endpoints.workspace.templates);
       return Array.isArray(data) ? data : [];
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
         // TODO: backend prompt-template endpoint is not available yet.
-        return [];
+        return promptSuggestions.filter((s) => !_moduleId || s.moduleId === _moduleId);
       }
       throw error;
     }
@@ -172,74 +176,95 @@ export const workspaceService = {
 };
 
 export const chatService = {
-  listThreads: async (): Promise<ChatThread[]> => {
+  /** Lightweight list for the sidebar — metadata only, no message bodies, scoped to one Module+Tool workspace. */
+  listThreads: async (moduleId: string, toolId: string): Promise<ChatThread[]> => {
     try {
-      const { data } = await api.get<unknown>(endpoints.chat.threads);
-      return getThreadPayload(data)
-        .map((thread) => normalizeThread(thread))
+      const { data } = await api.get<ApiEnvelope<BackendConversation[]>>(endpoints.ai.conversations, {
+        params: { module: moduleId, tool: TOOL_BACKEND_TOOL_MAP[toolId] ?? toolId },
+      });
+      return (data.data ?? [])
+        .map((conversation) => normalizeThread(conversation, { moduleId, toolId }))
         .filter((thread): thread is ChatThread => thread !== null);
     } catch (error) {
       if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
-        // TODO: backend history listing endpoint is not available yet.
         return [];
       }
       throw error;
     }
   },
+
+  /** Full conversation detail, including message history. */
   getThread: async (id: string): Promise<ChatThread | null> => {
     try {
-      const { data } = await api.get<BackendThread>(endpoints.chat.thread(id));
-      return normalizeThread(data);
+      const { data } = await api.get<ApiEnvelope<BackendConversation>>(endpoints.ai.conversation(id));
+      return normalizeThread(data.data);
     } catch (error) {
-      if (isAxiosError(error) && (error.response?.status === 404 || error.response?.status === 501)) {
-        // TODO: backend conversation detail endpoint is not available yet.
+      if (isAxiosError(error) && error.response?.status === 404) {
         return null;
       }
       throw error;
     }
   },
-  
+
+  deleteThread: async (id: string): Promise<void> => {
+    await api.delete(endpoints.ai.conversation(id));
+  },
+
   sendMessage: async (
     threadId: string | null,
     prompt: string,
-    context: AiQueryContext = {},
-  ): Promise<{ message: ChatMessage; thread: ChatThread | null }> => {
+    context: AiQueryContext,
+    signal?: AbortSignal,
+  ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage; thread: ChatThread | null }> => {
+    const backendTool = TOOL_BACKEND_TOOL_MAP[context.toolId];
+    if (!backendTool) {
+      // Tools without an entry in TOOL_BACKEND_TOOL_MAP (Notice Reply, Draft
+      // Assistant, Summarizer) have no working backend yet. The composer is
+      // disabled for these in the UI, but this guard exists so a stale
+      // client can't still fire a request that would silently be treated
+      // as Ask Bot — every tool call must go to its *own* endpoint or fail loudly.
+      throw new Error(`No backend route configured for tool "${context.toolId}".`);
+    }
 
-    const { data } = await api.post<BackendAiQueryResponse>(
+    const { data } = await api.post<ApiEnvelope<BackendQueryResult>>(
       endpoints.ai.query,
       {
         query: prompt,
-        thread_id: threadId ?? undefined,
+        // Backend field is `conversation_id` (numeric) — NOT `thread_id`. Sending the wrong
+        // key here silently drops it and makes every message start a brand-new conversation.
+        conversation_id: threadId ? Number(threadId) : undefined,
+        provider: "main",
+        tool: backendTool,
         module_id: context.moduleId,
-        tool_id: context.toolId,
-      }
+      },
+      { signal },
     );
 
-    const conversation = data.data.conversation;
-    const assistant = data.data.assistant_message;
+    const { conversation, user_message: userMessage, assistant_message: assistantMessage } = data.data;
 
-    const normalizedThread = normalizeThread({
-      ...conversation,
-      id: String(conversation.id),
+    const normalizedThread = normalizeThread(conversation, {
+      moduleId: context.moduleId,
+      toolId: context.toolId,
     });
 
-    const normalizedMessage: ChatMessage = {
-      id: String(assistant.id),
-      role: "assistant",
-      content: assistant.answer,
-      createdAt: assistant.created_at,
-      citations: (assistant.sources ?? []).map((source, index) =>
-        normalizeCitation(source, index)
-      ),
-      attachments: [],
-    };
-
     return {
-      message: normalizedMessage,
+      userMessage: {
+        id: String(userMessage.id),
+        role: "user",
+        content: userMessage.query,
+        createdAt: userMessage.created_at,
+        citations: [],
+        attachments: [] as Attachment[],
+      },
+      assistantMessage: {
+        id: String(assistantMessage.id),
+        role: "assistant",
+        content: assistantMessage.answer,
+        createdAt: assistantMessage.created_at,
+        citations: normalizeCitations(assistantMessage.sources),
+        attachments: [],
+      },
       thread: normalizedThread,
     };
   },
 };
-
-export const chatFolders = getTodoFallback<ChatFolder[]>([]);
-export const promptSuggestions = getTodoFallback<PromptSuggestion[]>([]);

@@ -17,9 +17,9 @@ export const workspaceModules: WorkspaceModule[] = [
     tools: [
       { id: "ask", slug: "ask", name: "Ask Bot", icon: "MessagesSquare", description: "Conversational research." },
       { id: "case-law", slug: "case-law", name: "Case Law Research", icon: "Scale", description: "Search & compare judgments." },
-      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Draft replies to notices." },
-      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Memos, opinions, submissions." },
-      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Summarize orders & judgments." },
+      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Draft replies to notices.", disabled: true, disabledReason: "Not yet available from the AI provider." },
+      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Memos, opinions, submissions.", disabled: true, disabledReason: "Not yet available from the AI provider." },
+      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Summarize orders & judgments.", disabled: true, disabledReason: "Not yet available from the AI provider." },
     ],
   },
   {
@@ -32,9 +32,9 @@ export const workspaceModules: WorkspaceModule[] = [
     tools: [
       { id: "ask", slug: "ask", name: "Ask Bot", icon: "MessagesSquare", description: "Conversational research." },
       { id: "case-law", slug: "case-law", name: "Case Law Research", icon: "Scale", description: "AAR/AAAR & tribunal rulings." },
-      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Reply to SCN and orders." },
-      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Advance ruling applications." },
-      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Circular & ruling summaries." },
+      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Reply to SCN and orders.", disabled: true, disabledReason: "Not yet available from the AI provider." },
+      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Advance ruling applications.", disabled: true, disabledReason: "Not yet available from the AI provider." },
+      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Circular & ruling summaries.", disabled: true, disabledReason: "Not yet available from the AI provider." },
     ],
   },
 ];
