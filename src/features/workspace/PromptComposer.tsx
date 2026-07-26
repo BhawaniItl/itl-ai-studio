@@ -28,6 +28,7 @@ export function PromptComposer({
   const [clarifyOptions, setClarifyOptions] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
+  const activeToolId = useWorkspaceStore((s) => s.activeToolId);
   const { data: suggestions } = usePromptSuggestions(activeModuleId);
   const isInputDisabled = isStreaming || disabled || isClarifying;
   const canClarify = !isInputDisabled && !!value.trim();
@@ -54,7 +55,7 @@ export function PromptComposer({
     setIsClarifying(true);
     setClarifyOptions([]);
     try {
-      const { needsClarification, options } = await chatService.clarify(trimmed);
+      const { needsClarification, options } = await chatService.clarify(trimmed, activeToolId);
       if (!needsClarification || options.length === 0) {
         toast.success("Your prompt is already clear — nothing to refine.");
         return;
@@ -68,7 +69,7 @@ export function PromptComposer({
     } finally {
       setIsClarifying(false);
     }
-  }, [value, isClarifying]);
+  }, [value, isClarifying, activeToolId]);
 
   const pickOption = (option: string) => {
     setValue(option);
