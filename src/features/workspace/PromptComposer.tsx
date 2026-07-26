@@ -1,10 +1,13 @@
 /* eslint-disable prettier/prettier */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Paperclip, Send, StopCircle, Mic } from "lucide-react";
+import { Paperclip, Send, StopCircle, Wand2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { usePromptSuggestions } from "@/hooks";
 import { useWorkspaceStore } from "@/store";
+import { chatService } from "@/services/workspace.service";
 
 const MAX_TEXTAREA_HEIGHT_PX = 200;
 
@@ -21,10 +24,13 @@ export function PromptComposer({
   disabledReason?: string;
 }) {
   const [value, setValue] = useState("");
+  const [isClarifying, setIsClarifying] = useState(false);
+  const [clarifyOptions, setClarifyOptions] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
   const { data: suggestions } = usePromptSuggestions(activeModuleId);
-  const isInputDisabled = isStreaming || disabled;
+  const isInputDisabled = isStreaming || disabled || isClarifying;
+  const canClarify = !isInputDisabled && !!value.trim();
 
   // Auto-grow: recalculate on every value change, capped so a huge paste
   // doesn't push the composer (or the messages above it) off screen.
@@ -41,6 +47,34 @@ export function PromptComposer({
     onSend?.(trimmed);
     setValue("");
   }, [value, isInputDisabled, onSend]);
+
+  const handleClarify = useCallback(async () => {
+    const trimmed = value.trim();
+    if (!trimmed || isClarifying) return;
+    setIsClarifying(true);
+    setClarifyOptions([]);
+    try {
+      const { needsClarification, options } = await chatService.clarify(trimmed);
+      if (!needsClarification || options.length === 0) {
+        toast.success("Your prompt is already clear — nothing to refine.");
+        return;
+      }
+      // The vendor returns a set of more specific candidate questions, not a
+      // single "improved" prompt — the user picks the one that matches what
+      // they meant, rather than it being silently auto-filled for them.
+      setClarifyOptions(options);
+    } catch {
+      toast.error("Couldn't clarify that prompt — please try again.");
+    } finally {
+      setIsClarifying(false);
+    }
+  }, [value, isClarifying]);
+
+  const pickOption = (option: string) => {
+    setValue(option);
+    setClarifyOptions([]);
+    textareaRef.current?.focus();
+  };
 
   return (
     <div className="w-full">
@@ -108,9 +142,38 @@ export function PromptComposer({
           )}
           style={{ maxHeight: MAX_TEXTAREA_HEIGHT_PX }}
         />
-        <Button type="button" variant="ghost" size="icon" disabled={isInputDisabled} title="Voice input — coming soon" className="h-9 w-9 shrink-0 rounded-xl">
-          <Mic className="h-4 w-4" />
-        </Button>
+        <Popover open={clarifyOptions.length > 0} onOpenChange={(open) => !open && setClarifyOptions([])}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={!canClarify}
+              onClick={handleClarify}
+              title="Clarify prompt"
+              className="h-9 w-9 shrink-0 rounded-xl"
+            >
+              {isClarifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-80 p-2">
+            <p className="mb-2 px-1 text-[11px] font-medium text-muted-foreground">
+              Your prompt could mean a few things — pick one:
+            </p>
+            <div className="flex flex-col gap-1">
+              {clarifyOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => pickOption(option)}
+                  className="rounded-lg px-2.5 py-1.5 text-left text-[13px] text-foreground transition-colors hover:bg-secondary"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
         {isStreaming ? (
           <Button type="button" size="icon" variant="destructive" disabled className="h-9 w-9 shrink-0 rounded-xl" title="Stopping mid-response isn't supported yet">
             <StopCircle className="h-4 w-4" />

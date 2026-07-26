@@ -104,12 +104,16 @@ export function WorkspaceSidebar() {
         {(modules ?? []).map((m) => (
           <button
             key={m.id}
-            onClick={() => setModule(m.id)}
+            onClick={() => !m.disabled && setModule(m.id)}
+            disabled={m.disabled}
+            title={m.disabled ? m.disabledReason ?? "Coming soon" : undefined}
             className={cn(
               "flex items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors",
-              activeModuleId === m.id
-                ? "bg-primary text-primary-foreground shadow-soft"
-                : "text-muted-foreground hover:text-foreground",
+              m.disabled
+                ? "cursor-not-allowed text-muted-foreground/40"
+                : activeModuleId === m.id
+                  ? "bg-primary text-primary-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Icon name={m.icon} className="h-3.5 w-3.5" />

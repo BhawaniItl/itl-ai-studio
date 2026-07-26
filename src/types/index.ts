@@ -60,6 +60,8 @@ export interface WorkspaceModule {
   description: string;
   color: string;
   tools: WorkspaceTool[];
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
 export interface WorkspaceTool {
@@ -82,6 +84,8 @@ export interface ChatMessage {
   attachments?: Attachment[];
   /** Local-only lifecycle state for optimistic UI. Absent = already settled. */
   status?: "pending" | "error";
+  /** Persisted server-side once submitted — "up" | "down" | undefined (not yet given). */
+  feedback?: "up" | "down";
 }
 
 export interface Citation {
