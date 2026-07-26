@@ -4,17 +4,29 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, Check, Download, RefreshCw, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell, AlertTriangle } from "lucide-react";
+import { Copy, Check, Download, Wand2, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useChatStore } from "@/store";
+import { chatService } from "@/services/workspace.service";
 import type { ChatMessage } from "@/types";
 
-export function ChatMessageBubble({ message }: { message: ChatMessage }) {
+const REFINE_SUGGESTIONS = ["Make it more formal", "Summarize", "Explain in simple language", "Add more case law"];
+
+export function ChatMessageBubble({ message, threadId }: { message: ChatMessage; threadId: string }) {
   const isUser = message.role === "user";
   const isError = message.status === "error";
   const isPending = message.status === "pending";
   const [copied, setCopied] = useState(false);
+  const [isRefineOpen, setIsRefineOpen] = useState(false);
+
+  // Optimistic/local-only messages (e.g. still in flight, or an error bubble)
+  // don't have a real backend message id yet — feedback and refine both need
+  // one, so they're disabled rather than firing a request that can't succeed.
+  const hasBackendId = !message.id.startsWith("local-");
 
   const handleCopy = async () => {
     try {
@@ -111,30 +123,172 @@ export function ChatMessageBubble({ message }: { message: ChatMessage }) {
         )}
 
         {!isUser && !isError && (
-          <div className="mt-2 flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground" onClick={handleCopy}>
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? "Copied" : "Copy"}
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground">
-              <Download className="h-3 w-3" /> Export
-            </Button>
-            {/* Regenerate is a placeholder — wiring it up requires re-sending the parent
-                user message, which will fall out naturally once streaming support lands. */}
-            <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground" disabled title="Coming soon">
-              <RefreshCw className="h-3 w-3" /> Regenerate
-            </Button>
-            <span className="mx-1 h-3.5 w-px bg-border" />
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
-              <ThumbsUp className="h-3 w-3" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
-              <ThumbsDown className="h-3 w-3" />
-            </Button>
-          </div>
+          <>
+            <div className="mt-2 flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground" onClick={handleCopy}>
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : "Copy"}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground">
+                <Download className="h-3 w-3" /> Export
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground"
+                disabled={!hasBackendId}
+                title={hasBackendId ? undefined : "Still saving — try again in a moment"}
+                onClick={() => setIsRefineOpen(true)}
+              >
+                <Wand2 className="h-3 w-3" /> Refine
+              </Button>
+              <span className="mx-1 h-3.5 w-px bg-border" />
+              <FeedbackButtons threadId={threadId} message={message} disabled={!hasBackendId} />
+            </div>
+            <RefineDialog
+              open={isRefineOpen}
+              onOpenChange={setIsRefineOpen}
+              threadId={threadId}
+              message={message}
+            />
+          </>
         )}
       </div>
     </motion.div>
+  );
+}
+
+function FeedbackButtons({
+  threadId,
+  message,
+  disabled,
+}: {
+  threadId: string;
+  message: ChatMessage;
+  disabled: boolean;
+}) {
+  const updateMessage = useChatStore((s) => s.updateMessage);
+  const [submitting, setSubmitting] = useState<"up" | "down" | null>(null);
+  const alreadyGiven = message.feedback;
+
+  const submit = async (rating: "up" | "down") => {
+    if (disabled || alreadyGiven || submitting) return;
+    setSubmitting(rating);
+    try {
+      await chatService.submitFeedback(message.id, rating);
+      updateMessage(threadId, message.id, { feedback: rating });
+    } catch {
+      toast.error("Couldn't submit feedback — please try again.");
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        disabled={disabled || !!alreadyGiven || submitting === "down"}
+        onClick={() => submit("up")}
+        title="Good response"
+        className={cn(
+          "h-7 w-7",
+          alreadyGiven === "up" ? "text-primary" : "text-muted-foreground",
+        )}
+      >
+        {submitting === "up" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ThumbsUp className="h-3 w-3" fill={alreadyGiven === "up" ? "currentColor" : "none"} />}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        disabled={disabled || !!alreadyGiven || submitting === "up"}
+        onClick={() => submit("down")}
+        title="Bad response"
+        className={cn(
+          "h-7 w-7",
+          alreadyGiven === "down" ? "text-destructive" : "text-muted-foreground",
+        )}
+      >
+        {submitting === "down" ? <Loader2 className="h-3 w-3 animate-spin" /> : <ThumbsDown className="h-3 w-3" fill={alreadyGiven === "down" ? "currentColor" : "none"} />}
+      </Button>
+    </>
+  );
+}
+
+function RefineDialog({
+  open,
+  onOpenChange,
+  threadId,
+  message,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  threadId: string;
+  message: ChatMessage;
+}) {
+  const [instruction, setInstruction] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const addMessage = useChatStore((s) => s.addMessage);
+
+  const handleSubmit = async () => {
+    const trimmed = instruction.trim();
+    if (!trimmed || isRefining) return;
+    setIsRefining(true);
+    try {
+      // Appended as a NEW assistant message — the original answer is never
+      // overwritten, and the conversation history stays intact.
+      const refined = await chatService.refineMessage(message.id, trimmed);
+      addMessage(threadId, refined);
+      setInstruction("");
+      onOpenChange(false);
+    } catch {
+      toast.error("Couldn't refine that answer — please try again.");
+    } finally {
+      setIsRefining(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !isRefining && onOpenChange(next)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Refine this answer</DialogTitle>
+          <DialogDescription>How would you like to refine this answer?</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {REFINE_SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setInstruction(s)}
+                className="rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <Textarea
+            autoFocus
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+            placeholder="e.g. Make it more formal, or add more case law…"
+            rows={3}
+            disabled={isRefining}
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isRefining}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={!instruction.trim() || isRefining} className="gap-1.5">
+            {isRefining && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            {isRefining ? "Refining…" : "Refine"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

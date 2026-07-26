@@ -1,5 +1,7 @@
+/* eslint-disable prettier/prettier */
 import { create } from "zustand";
 import type { ReactNode } from "react";
+import { generateId } from "@/lib/utils";
 
 export type ModalKind =
   | "confirm"
@@ -36,7 +38,7 @@ export const useModalStore = create<ModalStore>((set, get) => ({
   stack: [],
   open: (m) =>
     new Promise((resolve) => {
-      const id = m.id ?? crypto.randomUUID();
+      const id = m.id ?? generateId();
       set((s) => ({ stack: [...s.stack, { ...m, id, resolve }] }));
     }),
   close: (id, value) => {

@@ -1,8 +1,9 @@
+/* eslint-disable prettier/prettier */
 import { useCallback, useRef, useState } from "react";
 import { UploadCloud, X, FileText, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import { mockUpload, acceptedMime, type UploadKind } from "@/services/upload.service";
 import type { UploadedFile } from "@/types/cms";
 
@@ -29,7 +30,7 @@ export function FileUpload({
     async (files: FileList | File[]) => {
       const arr = Array.from(files);
       const queued: UploadedFile[] = arr.map((f) => ({
-        id: crypto.randomUUID(),
+        id: generateId(),
         name: f.name,
         size: f.size,
         type: f.type,

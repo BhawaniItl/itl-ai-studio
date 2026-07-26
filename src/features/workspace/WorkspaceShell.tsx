@@ -12,21 +12,13 @@ import { ChatMessageBubble, TypingIndicator } from "./ChatMessage";
 import { useSidebarStore, useWorkspaceStore, useChatStore } from "@/store";
 import { useWorkspaceModules } from "@/hooks";
 import { chatService } from "@/services/workspace.service";
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 
 const ERROR_MESSAGE_CONTENT = "⚠ Unable to generate a response.\n\nPlease try again.";
 
-const generateUUID = () => {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-};
-
 const createOptimisticMessage = (content: string): ChatMessage => ({
-  id: `local-${generateUUID()}`,
+  id: `local-${generateId()}`,
   role: "user",
   content,
   createdAt: new Date().toISOString(),
@@ -34,7 +26,7 @@ const createOptimisticMessage = (content: string): ChatMessage => ({
 });
 
 const createErrorMessage = (): ChatMessage => ({
-  id: `local-${generateUUID()}`,
+  id: `local-${generateId()}`,
   role: "assistant",
   content: ERROR_MESSAGE_CONTENT,
   createdAt: new Date().toISOString(),
@@ -128,7 +120,7 @@ export function WorkspaceShell() {
   const handleSend = useCallback(
     async (prompt: string) => {
       if (submissionInFlight.current) return;
-      if (activeTool?.disabled) return; // composer is disabled for these too; this is a hard backstop
+      if (activeTool?.disabled || activeModule?.disabled) return; // composer is disabled for these too; this is a hard backstop
       submissionInFlight.current = true;
 
       // Snapshot the workspace this message is being sent in. If the user
@@ -150,7 +142,7 @@ export function WorkspaceShell() {
       // immediately rather than waiting on a round trip.
       let localThreadId = thread?.id ?? null;
       if (isNewConversation) {
-        localThreadId = `local-${generateUUID()}`;
+        localThreadId = `local-${generateId()}`;
         createThread({
           id: localThreadId,
           title: prompt.slice(0, 60),
@@ -222,6 +214,7 @@ export function WorkspaceShell() {
       activeModuleId,
       activeToolId,
       activeTool,
+      activeModule,
       createThread,
       setThread,
       addMessage,
@@ -311,7 +304,7 @@ export function WorkspaceShell() {
             {thread && thread.messages.length > 0 ? (
               <div className="space-y-5">
                 {thread.messages.map((m) => (
-                  <ChatMessageBubble key={m.id} message={m} />
+                  <ChatMessageBubble key={m.id} message={m} threadId={thread.id} />
                 ))}
                 {isSending && <TypingIndicator />}
                 <div ref={scrollAnchorRef} />
@@ -328,8 +321,8 @@ export function WorkspaceShell() {
             <PromptComposer
               onSend={handleSend}
               isStreaming={isSending}
-              disabled={activeTool?.disabled}
-              disabledReason={activeTool?.disabledReason}
+              disabled={activeModule?.disabled || activeTool?.disabled}
+              disabledReason={activeModule?.disabled ? activeModule?.disabledReason : activeTool?.disabledReason}
             />
           </div>
         </div>

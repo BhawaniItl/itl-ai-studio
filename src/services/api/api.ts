@@ -223,6 +223,9 @@ export const endpoints = {
     models: "/ai/models",
     conversations: "/ai/conversations",
     conversation: (id: string) => `/ai/conversations/${id}`,
+    clarify: "/ai/clarify",
+    messageFeedback: (id: string) => `/ai/messages/${id}/feedback`,
+    messageRefine: (id: string) => `/ai/messages/${id}/refine`,
   },
   books: {
     list: "/admin/books",

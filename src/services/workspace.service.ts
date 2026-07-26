@@ -62,6 +62,7 @@ interface BackendMessage {
   query_time_ms?: number | null;
   sources?: BackendCitation[] | null;
   related_judgements?: unknown[] | null;
+  feedback?: "up" | "down" | null;
   created_at: string;
 }
 
@@ -126,6 +127,7 @@ const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
   createdAt: message.created_at,
   citations: normalizeCitations(message.sources),
   attachments: [],
+  feedback: message.feedback ?? undefined,
 });
 
 const normalizeThread = (
@@ -266,5 +268,40 @@ export const chatService = {
       },
       thread: normalizedThread,
     };
+  },
+
+  /**
+   * Clarifies a draft prompt via the vendor's Clarify API. Real contract
+   * (confirmed against api_io_reference.md) is `{query}` in — no
+   * previous-answer/session fields — and out comes either
+   * `{needs_clarification: false}` (prompt is already clear, nothing to do)
+   * or `{needs_clarification: true, options: [...]}`: a list of more
+   * specific candidate questions for the user to pick from, NOT a single
+   * "improved" prompt to auto-fill.
+   */
+  clarify: async (
+    query: string,
+    signal?: AbortSignal,
+  ): Promise<{ needsClarification: boolean; options: string[] }> => {
+    const { data } = await api.post<ApiEnvelope<{ needs_clarification?: boolean; options?: string[] }>>(
+      endpoints.ai.clarify,
+      { query },
+      { signal },
+    );
+    return {
+      needsClarification: data.data?.needs_clarification ?? false,
+      options: data.data?.options ?? [],
+    };
+  },
+
+  submitFeedback: async (messageId: string, rating: "up" | "down"): Promise<void> => {
+    await api.post(endpoints.ai.messageFeedback(messageId), { rating });
+  },
+
+  refineMessage: async (messageId: string, instruction: string): Promise<ChatMessage> => {
+    const { data } = await api.post<ApiEnvelope<BackendMessage>>(endpoints.ai.messageRefine(messageId), {
+      instruction,
+    });
+    return normalizeStoredMessage(data.data);
   },
 };

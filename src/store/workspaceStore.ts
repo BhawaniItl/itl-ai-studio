@@ -11,12 +11,14 @@ interface WorkspaceStore {
   reset: () => void;
 }
 export const useWorkspaceStore = create<WorkspaceStore>((set) => ({
-  activeModuleId: "income-tax",
+  activeModuleId: "gst",
   activeToolId: "ask",
   activeThreadId: null,
-
+  // Switching module or tool moves to a completely different conversation
+  // namespace (module+tool) — any previously selected conversation belongs
+  // to the old workspace and must not stay selected in the new one.
   setModule: (id) => set({ activeModuleId: id, activeThreadId: null }),
   setTool: (id) => set({ activeToolId: id, activeThreadId: null }),
   setThread: (id) => set({ activeThreadId: id }),
-  reset: () => set({ activeModuleId: "income-tax", activeToolId: "ask", activeThreadId: null }),
+  reset: () => set({ activeModuleId: "gst", activeToolId: "ask", activeThreadId: null }),
 }));

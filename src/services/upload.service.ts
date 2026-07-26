@@ -1,4 +1,6 @@
+/* eslint-disable prettier/prettier */
 import type { UploadedFile } from "@/types/cms";
+import { generateId } from "@/lib/utils";
 
 export type UploadKind = "pdf" | "docx" | "image" | "excel" | "csv" | "zip";
 
@@ -28,7 +30,7 @@ export function mockUpload(
         onProgress(p);
         clearInterval(timer);
         resolve({
-          id: crypto.randomUUID(),
+          id: generateId(),
           name: file.name,
           size: file.size,
           type: file.type,
