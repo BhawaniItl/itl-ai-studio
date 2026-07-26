@@ -5,22 +5,24 @@ import { promptSuggestions, workspaceModules } from "@/mock/workspace";
 import type { Attachment, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
 
 /**
- * Maps a workspace tool to the `tool` value the backend's /ai/query expects.
- * The vendor doesn't distinguish Income Tax vs GST at the API level (same
- * endpoint serves both — module is purely an app-side namespace), so this
- * only needs to vary by tool, never by module.
+ * Maps a workspace tool to the {provider, tool} pair the backend's
+ * /ai/query expects. Confirmed against the vendor's own Django reference
+ * client (core/views.py + core/case_law_research_views.py) — critically,
+ * "Case Law Research" is NOT `provider: main, tool: case-laws` (that's a
+ * different, secondary endpoint requiring a context_answer). It's its own
+ * provider — the judgement/premium search bot.
  *
  * Tools not listed here have no working backend yet (see mock/workspace.ts
  * `disabled` flags) — sendMessage() refuses to call for them rather than
  * silently falling back to Ask Bot.
  */
-const TOOL_BACKEND_TOOL_MAP: Record<string, string> = {
-  ask: "chat",
-  "case-law": "case-laws",
+const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }> = {
+  ask: { provider: "main", tool: "chat" },
+  "case-law": { provider: "premium", tool: "search" },
 };
 
-const BACKEND_TOOL_TO_UI_TOOL_MAP: Record<string, string> = Object.fromEntries(
-  Object.entries(TOOL_BACKEND_TOOL_MAP).map(([uiTool, backendTool]) => [backendTool, uiTool]),
+const BACKEND_ROUTE_TO_UI_TOOL_MAP: Record<string, string> = Object.fromEntries(
+  Object.entries(TOOL_BACKEND_ROUTE_MAP).map(([uiTool, route]) => [`${route.provider}:${route.tool}`, uiTool]),
 );
 
 interface AiQueryContext {
@@ -146,7 +148,10 @@ const normalizeThread = (
     // conversation actually was, which is why GST conversations kept showing
     // up under the Income Tax module.
     moduleId: conversation.module ?? overrides.moduleId ?? "gst",
-    toolId: (conversation.tool && BACKEND_TOOL_TO_UI_TOOL_MAP[conversation.tool]) ?? overrides.toolId ?? "ask",
+    toolId:
+      (conversation.provider && conversation.tool
+        ? BACKEND_ROUTE_TO_UI_TOOL_MAP[`${conversation.provider}:${conversation.tool}`]
+        : undefined) ?? overrides.toolId ?? "ask",
     updatedAt:
       conversation.last_message_at ?? conversation.updated_at ?? new Date().toISOString(),
     messages: hasMessages ? conversation.messages!.map(normalizeStoredMessage) : [],
@@ -181,8 +186,9 @@ export const chatService = {
   /** Lightweight list for the sidebar — metadata only, no message bodies, scoped to one Module+Tool workspace. */
   listThreads: async (moduleId: string, toolId: string): Promise<ChatThread[]> => {
     try {
+      const route = TOOL_BACKEND_ROUTE_MAP[toolId];
       const { data } = await api.get<ApiEnvelope<BackendConversation[]>>(endpoints.ai.conversations, {
-        params: { module: moduleId, tool: TOOL_BACKEND_TOOL_MAP[toolId] ?? toolId },
+        params: { module: moduleId, provider: route?.provider, tool: route?.tool ?? toolId },
       });
       return (data.data ?? [])
         .map((conversation) => normalizeThread(conversation, { moduleId, toolId }))
@@ -218,9 +224,9 @@ export const chatService = {
     context: AiQueryContext,
     signal?: AbortSignal,
   ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage; thread: ChatThread | null }> => {
-    const backendTool = TOOL_BACKEND_TOOL_MAP[context.toolId];
-    if (!backendTool) {
-      // Tools without an entry in TOOL_BACKEND_TOOL_MAP (Notice Reply, Draft
+    const route = TOOL_BACKEND_ROUTE_MAP[context.toolId];
+    if (!route) {
+      // Tools without an entry in TOOL_BACKEND_ROUTE_MAP (Notice Reply, Draft
       // Assistant, Summarizer) have no working backend yet. The composer is
       // disabled for these in the UI, but this guard exists so a stale
       // client can't still fire a request that would silently be treated
@@ -235,8 +241,8 @@ export const chatService = {
         // Backend field is `conversation_id` (numeric) — NOT `thread_id`. Sending the wrong
         // key here silently drops it and makes every message start a brand-new conversation.
         conversation_id: threadId ? Number(threadId) : undefined,
-        provider: "main",
-        tool: backendTool,
+        provider: route.provider,
+        tool: route.tool,
         module_id: context.moduleId,
       },
       { signal },
@@ -281,11 +287,13 @@ export const chatService = {
    */
   clarify: async (
     query: string,
+    toolId: string,
     signal?: AbortSignal,
   ): Promise<{ needsClarification: boolean; options: string[] }> => {
+    const provider = TOOL_BACKEND_ROUTE_MAP[toolId]?.provider ?? "main";
     const { data } = await api.post<ApiEnvelope<{ needs_clarification?: boolean; options?: string[] }>>(
       endpoints.ai.clarify,
-      { query },
+      { query, provider },
       { signal },
     );
     return {
