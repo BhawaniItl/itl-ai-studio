@@ -41,6 +41,23 @@ export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], 
 export const useAdminUsers = (params: UserListParams,) => useQuery({ queryKey: ["admin", "users", params], queryFn: () => adminService.getUsers(params), staleTime: ADMIN_STALE, placeholderData: keepPreviousData,});
 export const useAdminNav = () => useQuery({ queryKey: ["admin", "nav"], queryFn: () => adminService.getNav(), staleTime: Infinity });
 export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: () => analyticsService.getOverview(), staleTime: ADMIN_STALE });
+
+export const useAiAnalytics = (params?: { start_date?: string; end_date?: string }) =>
+  useQuery({
+    queryKey: ["admin", "ai-analytics", params],
+    queryFn: () => analyticsService.getAiAnalytics(params),
+    staleTime: ADMIN_STALE,
+  });
+
+export const useAiHealth = () =>
+  useQuery({
+    queryKey: ["admin", "ai-health"],
+    queryFn: () => analyticsService.getAiHealth(),
+    // A live status check, not cached data — keep it reasonably fresh
+    // while the admin has this page open.
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+  });
 export const useMe = (enabled = true) => useQuery({ queryKey: ["me"], queryFn: () => userService.me(), enabled, staleTime: ADMIN_STALE });
 
 export const useLegal = (slug: string) =>
