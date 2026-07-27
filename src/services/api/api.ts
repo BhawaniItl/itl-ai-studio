@@ -228,6 +228,8 @@ export const endpoints = {
     messageRefine: (id: string) => `/ai/messages/${id}/refine`,
     noticeGenerate: "/ai/notice/generate",
     summarize: "/ai/summarize",
+    analytics: "/ai/analytics",
+    health: "/ai/health",
   },
   books: {
     list: "/admin/books",
