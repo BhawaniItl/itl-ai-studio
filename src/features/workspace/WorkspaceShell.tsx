@@ -11,18 +11,19 @@ import { PromptComposer } from "./PromptComposer";
 import { ChatMessageBubble, TypingIndicator } from "./ChatMessage";
 import { useSidebarStore, useWorkspaceStore, useChatStore } from "@/store";
 import { useWorkspaceModules } from "@/hooks";
-import { chatService } from "@/services/workspace.service";
+import { chatService, isFileTool } from "@/services/workspace.service";
 import { cn, generateId } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 
 const ERROR_MESSAGE_CONTENT = "⚠ Unable to generate a response.\n\nPlease try again.";
 
-const createOptimisticMessage = (content: string): ChatMessage => ({
+const createOptimisticMessage = (content: string, file?: File | null): ChatMessage => ({
   id: `local-${generateId()}`,
   role: "user",
-  content,
+  content: content || (file ? `Attached: ${file.name}` : ""),
   createdAt: new Date().toISOString(),
   status: "pending",
+  attachments: file ? [{ id: `local-${file.name}`, name: file.name, size: file.size, type: file.type }] : [],
 });
 
 const createErrorMessage = (): ChatMessage => ({
@@ -65,6 +66,7 @@ export function WorkspaceShell() {
   // transport concerns so a future SSE/WebSocket implementation only needs to
   // change how these flags get flipped, not anything that reads them.
   const [isSending, setIsSending] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | undefined>(undefined);
   const submissionInFlight = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -118,9 +120,10 @@ export function WorkspaceShell() {
   }, [thread?.id, thread?.messages.length, isSending]);
 
   const handleSend = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, file?: File | null) => {
       if (submissionInFlight.current) return;
       if (activeTool?.disabled || activeModule?.disabled) return; // composer is disabled for these too; this is a hard backstop
+      if (!prompt.trim() && !file) return;
       submissionInFlight.current = true;
 
       // Snapshot the workspace this message is being sent in. If the user
@@ -135,7 +138,7 @@ export function WorkspaceShell() {
       };
 
       const isNewConversation = !thread;
-      const optimisticUserMessage = createOptimisticMessage(prompt);
+      const optimisticUserMessage = createOptimisticMessage(prompt, file);
 
       // Optimistic UI: the user's message appears instantly, before the backend
       // has even been asked. New conversations switch to their (temporary) thread
@@ -145,7 +148,7 @@ export function WorkspaceShell() {
         localThreadId = `local-${generateId()}`;
         createThread({
           id: localThreadId,
-          title: prompt.slice(0, 60),
+          title: (prompt || file?.name || "New chat").slice(0, 60),
           moduleId: requestModuleId,
           toolId: requestToolId,
           updatedAt: new Date().toISOString(),
@@ -161,14 +164,21 @@ export function WorkspaceShell() {
       abortControllerRef.current = controller;
 
       setIsSending(true);
+      if (file) setUploadProgress(0);
       try {
         const backendConversationId = isNewConversation ? null : localThreadId;
-        const { userMessage, assistantMessage, thread: backendThread } = await chatService.sendMessage(
-          backendConversationId,
-          prompt,
-          { moduleId: requestModuleId, toolId: requestToolId },
-          controller.signal,
-        );
+        const context = { moduleId: requestModuleId, toolId: requestToolId };
+
+        const { userMessage, assistantMessage, thread: backendThread } = isFileTool(requestToolId)
+          ? await chatService.sendFileMessage(
+              backendConversationId,
+              prompt,
+              context,
+              file,
+              setUploadProgress,
+              controller.signal,
+            )
+          : await chatService.sendMessage(backendConversationId, prompt, context, controller.signal);
 
         if (isNewConversation && backendThread) {
           // Swap the temporary local thread for the real, backend-assigned one.
@@ -203,6 +213,7 @@ export function WorkspaceShell() {
         }
       } finally {
         setIsSending(false);
+        setUploadProgress(undefined);
         submissionInFlight.current = false;
         if (abortControllerRef.current === controller) {
           abortControllerRef.current = null;
@@ -323,6 +334,7 @@ export function WorkspaceShell() {
               isStreaming={isSending}
               disabled={activeModule?.disabled || activeTool?.disabled}
               disabledReason={activeModule?.disabled ? activeModule?.disabledReason : activeTool?.disabledReason}
+              uploadProgress={uploadProgress}
             />
           </div>
         </div>

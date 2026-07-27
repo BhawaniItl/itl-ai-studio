@@ -226,6 +226,8 @@ export const endpoints = {
     clarify: "/ai/clarify",
     messageFeedback: (id: string) => `/ai/messages/${id}/feedback`,
     messageRefine: (id: string) => `/ai/messages/${id}/refine`,
+    noticeGenerate: "/ai/notice/generate",
+    summarize: "/ai/summarize",
   },
   books: {
     list: "/admin/books",

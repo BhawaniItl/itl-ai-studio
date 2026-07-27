@@ -19,6 +19,19 @@ import type { Attachment, ChatMessage, ChatThread, Citation, PromptSuggestion } 
 const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }> = {
   ask: { provider: "main", tool: "chat" },
   "case-law": { provider: "premium", tool: "search" },
+  "notice-reply": { provider: "notice", tool: "process" },
+  summarize: { provider: "summarizer", tool: "summarize" },
+};
+
+/**
+ * Tools backed by the multipart file-upload endpoints (/ai/notice/generate,
+ * /ai/summarize) rather than the JSON /ai/query endpoint — confirmed against
+ * core/draft_assistant.py and core/summarizer.py, which both accept a file
+ * as optional (zero-or-more), never required.
+ */
+const FILE_TOOL_ENDPOINTS: Record<string, string> = {
+  "notice-reply": endpoints.ai.noticeGenerate,
+  summarize: endpoints.ai.summarize,
 };
 
 const BACKEND_ROUTE_TO_UI_TOOL_MAP: Record<string, string> = Object.fromEntries(
@@ -182,6 +195,8 @@ export const workspaceService = {
   },
 };
 
+export const isFileTool = (toolId: string): boolean => toolId in FILE_TOOL_ENDPOINTS;
+
 export const chatService = {
   /** Lightweight list for the sidebar — metadata only, no message bodies, scoped to one Module+Tool workspace. */
   listThreads: async (moduleId: string, toolId: string): Promise<ChatThread[]> => {
@@ -226,12 +241,16 @@ export const chatService = {
   ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage; thread: ChatThread | null }> => {
     const route = TOOL_BACKEND_ROUTE_MAP[context.toolId];
     if (!route) {
-      // Tools without an entry in TOOL_BACKEND_ROUTE_MAP (Notice Reply, Draft
-      // Assistant, Summarizer) have no working backend yet. The composer is
-      // disabled for these in the UI, but this guard exists so a stale
-      // client can't still fire a request that would silently be treated
-      // as Ask Bot — every tool call must go to its *own* endpoint or fail loudly.
+      // Draft Assistant has no entry — no distinct backend for it (see
+      // mock/workspace.ts `disabled` note). The composer is disabled for it
+      // in the UI, but this guard exists so a stale client can't still fire
+      // a request that would silently be treated as Ask Bot.
       throw new Error(`No backend route configured for tool "${context.toolId}".`);
+    }
+    if (FILE_TOOL_ENDPOINTS[context.toolId]) {
+      // Notice Reply and Summarizer are multipart file-upload endpoints —
+      // use sendFileMessage() instead.
+      throw new Error(`Tool "${context.toolId}" must use sendFileMessage(), not sendMessage().`);
     }
 
     const { data } = await api.post<ApiEnvelope<BackendQueryResult>>(
@@ -263,6 +282,70 @@ export const chatService = {
         createdAt: userMessage.created_at,
         citations: [],
         attachments: [] as Attachment[],
+      },
+      assistantMessage: {
+        id: String(assistantMessage.id),
+        role: "assistant",
+        content: assistantMessage.answer,
+        createdAt: assistantMessage.created_at,
+        citations: normalizeCitations(assistantMessage.sources),
+        attachments: [],
+      },
+      thread: normalizedThread,
+    };
+  },
+
+  /**
+   * The multipart counterpart to sendMessage() — for Notice Reply and
+   * Summarizer, which take an optional file (never required, matching
+   * core/draft_assistant.py and core/summarizer.py) plus the query text.
+   * Returns the same shape as sendMessage() so callers can treat both
+   * uniformly.
+   */
+  sendFileMessage: async (
+    threadId: string | null,
+    prompt: string,
+    context: AiQueryContext,
+    file?: File | null,
+    onUploadProgress?: (percent: number) => void,
+    signal?: AbortSignal,
+  ): Promise<{ userMessage: ChatMessage; assistantMessage: ChatMessage; thread: ChatThread | null }> => {
+    const endpoint = FILE_TOOL_ENDPOINTS[context.toolId];
+    if (!endpoint) {
+      throw new Error(`Tool "${context.toolId}" is not a file-upload tool.`);
+    }
+
+    const form = new FormData();
+    form.append("query", prompt);
+    form.append("module_id", context.moduleId);
+    if (threadId) form.append("conversation_id", threadId);
+    if (file) form.append("file", file);
+
+    const { data } = await api.post<ApiEnvelope<BackendQueryResult>>(endpoint, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+      signal,
+      onUploadProgress: onUploadProgress
+        ? (event) => {
+            if (event.total) onUploadProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        : undefined,
+    });
+
+    const { conversation, user_message: userMessage, assistant_message: assistantMessage } = data.data;
+
+    const normalizedThread = normalizeThread(conversation, {
+      moduleId: context.moduleId,
+      toolId: context.toolId,
+    });
+
+    return {
+      userMessage: {
+        id: String(userMessage.id),
+        role: "user",
+        content: userMessage.query,
+        createdAt: userMessage.created_at,
+        citations: [],
+        attachments: file ? [{ id: `local-${file.name}`, name: file.name, size: file.size, type: file.type }] : [],
       },
       assistantMessage: {
         id: String(assistantMessage.id),

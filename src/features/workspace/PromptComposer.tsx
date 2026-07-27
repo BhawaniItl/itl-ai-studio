@@ -1,37 +1,44 @@
 /* eslint-disable prettier/prettier */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Paperclip, Send, StopCircle, Wand2, Loader2 } from "lucide-react";
+import { Paperclip, Send, StopCircle, Wand2, Loader2, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { usePromptSuggestions } from "@/hooks";
 import { useWorkspaceStore } from "@/store";
-import { chatService } from "@/services/workspace.service";
+import { chatService, isFileTool } from "@/services/workspace.service";
 
 const MAX_TEXTAREA_HEIGHT_PX = 200;
+const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20MB
 
 export function PromptComposer({
   onSend,
   isStreaming = false,
   disabled = false,
   disabledReason,
+  uploadProgress,
 }: {
-  onSend?: (prompt: string) => void;
+  onSend?: (prompt: string, file?: File | null) => void;
   isStreaming?: boolean;
   /** True when the active tool has no working backend yet (e.g. Draft Assistant). */
   disabled?: boolean;
   disabledReason?: string;
+  /** 0-100 while a file is uploading, undefined otherwise. */
+  uploadProgress?: number;
 }) {
   const [value, setValue] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [isClarifying, setIsClarifying] = useState(false);
   const [clarifyOptions, setClarifyOptions] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const activeModuleId = useWorkspaceStore((s) => s.activeModuleId);
   const activeToolId = useWorkspaceStore((s) => s.activeToolId);
   const { data: suggestions } = usePromptSuggestions(activeModuleId);
   const isInputDisabled = isStreaming || disabled || isClarifying;
   const canClarify = !isInputDisabled && !!value.trim();
+  const acceptsFile = isFileTool(activeToolId);
 
   // Auto-grow: recalculate on every value change, capped so a huge paste
   // doesn't push the composer (or the messages above it) off screen.
@@ -42,12 +49,30 @@ export function PromptComposer({
     el.style.height = `${Math.min(el.scrollHeight, MAX_TEXTAREA_HEIGHT_PX)}px`;
   }, [value]);
 
+  // Switching tools mid-draft: drop an attachment that no longer makes sense
+  // (Notice Reply's PDF isn't meaningful once you've switched to Ask Bot).
+  useEffect(() => {
+    if (!acceptsFile) setFile(null);
+  }, [acceptsFile]);
+
   const submit = useCallback(() => {
     const trimmed = value.trim();
-    if (!trimmed || isInputDisabled) return; // guards against duplicate/mid-flight/disabled-tool submissions
-    onSend?.(trimmed);
+    if ((!trimmed && !file) || isInputDisabled) return; // guards against duplicate/mid-flight/disabled-tool submissions
+    onSend?.(trimmed, file);
     setValue("");
-  }, [value, isInputDisabled, onSend]);
+    setFile(null);
+  }, [value, file, isInputDisabled, onSend]);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = e.target.files?.[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!picked) return;
+    if (picked.size > MAX_ATTACHMENT_BYTES) {
+      toast.error("That file is too large — max 20MB.");
+      return;
+    }
+    setFile(picked);
+  };
 
   const handleClarify = useCallback(async () => {
     const trimmed = value.trim();
@@ -102,6 +127,27 @@ export function PromptComposer({
           </div>
         )
       )}
+
+      {file && (
+        <div className="mb-2 flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-[12px]">
+          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate">{file.name}</span>
+          <span className="shrink-0 text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
+          {uploadProgress != null ? (
+            <span className="shrink-0 text-muted-foreground">{uploadProgress}%</span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setFile(null)}
+              disabled={isInputDisabled}
+              className="shrink-0 text-muted-foreground hover:text-destructive disabled:pointer-events-none"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -109,12 +155,14 @@ export function PromptComposer({
         }}
         className="glass-strong flex items-end gap-2 rounded-2xl p-2.5 shadow-float"
       >
+        <input ref={fileInputRef} type="file" hidden onChange={handleFilePick} />
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          disabled={isInputDisabled}
-          title="Attachments — coming soon"
+          disabled={isInputDisabled || !acceptsFile}
+          onClick={() => fileInputRef.current?.click()}
+          title={acceptsFile ? "Attach a document" : "Attachments aren't used by this tool"}
           className="h-9 w-9 shrink-0 rounded-xl"
         >
           <Paperclip className="h-4 w-4" />
@@ -135,7 +183,9 @@ export function PromptComposer({
           placeholder={
             disabled
               ? "This tool isn't available yet…"
-              : "Ask ITL AI about Income Tax or GST — statute, case law, circulars, notice replies…"
+              : acceptsFile
+                ? "Paste the notice text, or attach a document, and add any instructions…"
+                : "Ask ITL AI about Income Tax or GST — statute, case law, circulars, notice replies…"
           }
           className={cn(
             "min-h-[36px] flex-1 resize-none bg-transparent px-2 py-2 text-[15px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-none",
@@ -183,7 +233,7 @@ export function PromptComposer({
           <Button
             type="submit"
             size="icon"
-            disabled={!value.trim() || isInputDisabled}
+            disabled={(!value.trim() && !file) || isInputDisabled}
             className="h-9 w-9 shrink-0 rounded-xl gradient-primary text-primary-foreground shadow-soft"
           >
             <Send className="h-4 w-4" />

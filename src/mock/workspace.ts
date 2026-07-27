@@ -34,9 +34,9 @@ export const workspaceModules: WorkspaceModule[] = [
     tools: [
       { id: "ask", slug: "ask", name: "Ask Bot", icon: "MessagesSquare", description: "Conversational research." },
       { id: "case-law", slug: "case-law", name: "Case Law Research", icon: "Scale", description: "AAR/AAAR & tribunal rulings." },
-      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Reply to SCN and orders.", disabled: true, disabledReason: "Not yet available from the AI provider." },
-      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Advance ruling applications.", disabled: true, disabledReason: "Not yet available from the AI provider." },
-      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Circular & ruling summaries.", disabled: true, disabledReason: "Not yet available from the AI provider." },
+      { id: "notice-reply", slug: "notice-reply", name: "Notice Reply", icon: "FileText", description: "Reply to SCN and orders." },
+      { id: "draft", slug: "draft", name: "Draft Assistant", icon: "PenLine", description: "Advance ruling applications.", disabled: true, disabledReason: "Same underlying capability as Notice Reply — use that instead." },
+      { id: "summarize", slug: "summarize", name: "Summarizer", icon: "Sparkles", description: "Circular & ruling summaries." },
     ],
   },
 ];
