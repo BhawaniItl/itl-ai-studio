@@ -1,21 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { isAxiosError } from "axios";
 import { api, endpoints } from "./api/api";
 import { promptSuggestions, workspaceModules } from "@/mock/workspace";
 import type { Attachment, ChatMessage, ChatThread, Citation, MessageAttachment, PromptSuggestion, RelatedJudgement } from "@/types";
 
-/**
- * Maps a workspace tool to the {provider, tool} pair the backend's
- * /ai/query expects. Confirmed against the vendor's own Django reference
- * client (core/views.py + core/case_law_research_views.py) — critically,
- * "Case Law Research" is NOT `provider: main, tool: case-laws` (that's a
- * different, secondary endpoint requiring a context_answer). It's its own
- * provider — the judgement/premium search bot.
- *
- * Tools not listed here have no working backend yet (see mock/workspace.ts
- * `disabled` flags) — sendMessage() refuses to call for them rather than
- * silently falling back to Ask Bot.
- */
+
 const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }> = {
   ask: { provider: "main", tool: "chat" },
   "case-law": { provider: "premium", tool: "search" },
@@ -23,12 +13,7 @@ const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }>
   summarize: { provider: "summarizer", tool: "summarize" },
 };
 
-/**
- * Tools backed by the multipart file-upload endpoints (/ai/notice/generate,
- * /ai/summarize) rather than the JSON /ai/query endpoint — confirmed against
- * core/draft_assistant.py and core/summarizer.py, which both accept a file
- * as optional (zero-or-more), never required.
- */
+
 const FILE_TOOL_ENDPOINTS: Record<string, string> = {
   "notice-reply": endpoints.ai.noticeGenerate,
   summarize: endpoints.ai.summarize,
@@ -142,6 +127,31 @@ interface BackendQueryResult {
   };
 }
 
+interface NoticeSources {
+  sections?: Array<{
+    url?: string;
+    type?: string;
+    heading?: string;
+    reference?: string;
+  }>;
+
+  case_laws?: Array<{
+    url?: string;
+    court?: string;
+    citation?: string;
+    partyname?: string;
+    favour?: string;
+    dateofjudgement?: string;
+    sectionno?: string;
+  }>;
+
+  circulars?: Array<{
+    url?: string;
+    heading?: string;
+    reference?: string;
+  }>;
+}
+
 const titleCase = (s: string) => s.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const normalizeCitation = (citation: BackendCitation, index: number): Citation => {
@@ -180,6 +190,55 @@ const normalizeRelatedJudgement = (j: BackendRelatedJudgement, index: number): R
   link: j.link,
 });
 
+function normalizeNoticeSources(
+  sources?: NoticeSources | BackendCitation[] | null
+): Citation[] {
+  if (!sources) return [];
+
+  // Existing providers
+  if (Array.isArray(sources)) {
+    return normalizeCitations(sources);
+  }
+
+  const citations: BackendCitation[] = [];
+
+  sources.sections?.forEach((s, index) => {
+    citations.push({
+      id: `section-${index}`,
+      document_type: s.type,
+      heading: s.heading,
+      reference: s.reference,
+      link: s.url,
+      source_no: citations.length + 1,
+    });
+  });
+
+  sources.case_laws?.forEach((c, index) => {
+    citations.push({
+      id: `case-${index}`,
+      document_type: "Judgement",
+      heading: c.partyname,
+      citation: c.citation,
+      court: c.court,
+      link: c.url,
+      source_no: citations.length + 1,
+    });
+  });
+
+  sources.circulars?.forEach((c, index) => {
+    citations.push({
+      id: `circular-${index}`,
+      document_type: "Circular",
+      heading: c.heading,
+      reference: c.reference,
+      link: c.url,
+      source_no: citations.length + 1,
+    });
+  });
+
+  return normalizeCitations(citations);
+}
+
 const normalizeRelatedJudgements = (list: BackendRelatedJudgement[] | null | undefined): RelatedJudgement[] =>
   (list ?? []).map(normalizeRelatedJudgement);
 
@@ -199,7 +258,10 @@ const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
   role: message.role,
   content: message.content ?? "",
   createdAt: message.created_at,
-  citations: normalizeCitations(message.sources),
+  citations:
+  Array.isArray(message.sources)
+    ? normalizeCitations(message.sources)
+    : normalizeNoticeSources(message.sources as any),
   relatedJudgements: normalizeRelatedJudgements(message.related_judgements),
   needsClarification: message.needs_clarification ?? false,
   deepResearchUsed: message.deep_research_used ?? false,
@@ -418,7 +480,10 @@ export const chatService = {
         role: "assistant",
         content: assistantMessage.answer,
         createdAt: assistantMessage.created_at,
-        citations: normalizeCitations(assistantMessage.sources),
+        citations:
+          context.toolId === "notice-reply"
+            ? normalizeNoticeSources(assistantMessage.sources as any)
+            : normalizeCitations(assistantMessage.sources),
         relatedJudgements: normalizeRelatedJudgements(assistantMessage.related_judgements),
         needsClarification: assistantMessage.needs_clarification ?? false,
         deepResearchUsed: assistantMessage.deep_research_used ?? false,
