@@ -42,9 +42,9 @@ export const workspaceModules: WorkspaceModule[] = [
 ];
 
 const sampleCitations: Citation[] = [
-  { id: "c1", title: "CIT v. Vatika Township (P) Ltd.", type: "case", ref: "(2015) 1 SCC 1", snippet: "Retrospective operation of tax statutes — presumption against retrospectivity." },
-  { id: "c2", title: "Section 147, Income Tax Act, 1961", type: "act", ref: "s.147", snippet: "Income escaping assessment." },
-  { id: "c3", title: "CBDT Circular No. 549 dated 31.10.1989", type: "circular", ref: "Circular 549/1989" },
+  { id: "c1", sourceNo: 1, heading: "CIT v. Vatika Township (P) Ltd.", documentType: "Judgement", citation: "(2015) 1 SCC 1", snippet: "Retrospective operation of tax statutes — presumption against retrospectivity." },
+  { id: "c2", sourceNo: 2, heading: "Section 147, Income Tax Act, 1961", documentType: "Act", reference: "s.147", snippet: "Income escaping assessment." },
+  { id: "c3", sourceNo: 3, heading: "CBDT Circular No. 549 dated 31.10.1989", documentType: "Circular", reference: "Circular 549/1989" },
 ];
 
 // Static timestamps to avoid SSR/hydration mismatches from Date.now() at module scope.

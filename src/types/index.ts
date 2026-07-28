@@ -81,19 +81,58 @@ export interface ChatMessage {
   content: string;
   createdAt: string;
   citations?: Citation[];
+  relatedJudgements?: RelatedJudgement[];
   attachments?: Attachment[];
+  /** A single uploaded/generated document tied to this message (Notice Reply / Summarizer). */
+  attachment?: MessageAttachment;
+  /** True when `content` is actually a clarifying question, not a real answer — vendor's needs_clarification flag. */
+  needsClarification?: boolean;
+  /** Vendor did an extra deep-research pass for this answer. */
+  deepResearchUsed?: boolean;
   /** Local-only lifecycle state for optimistic UI. Absent = already settled. */
   status?: "pending" | "error";
   /** Persisted server-side once submitted — "up" | "down" | undefined (not yet given). */
   feedback?: "up" | "down";
 }
 
+/**
+ * Matches the vendor's `sources[]` entries as closely as possible.
+ * `documentType` is whatever the vendor returns — Act, Judgement, Circular,
+ * Notification, Rule, Section, Order, Statute, or any future type — never
+ * hardcoded to a fixed enum, so a new vendor type just renders with its own
+ * label instead of silently becoming "Act".
+ */
 export interface Citation {
   id: string;
-  title: string;
-  type: "act" | "case" | "circular" | "notification";
-  ref: string;
+  /** Vendor's own numbering — maps to "(Source N)" mentions inside the markdown answer. */
+  sourceNo?: number;
+  documentType: string;
+  heading: string;
+  reference?: string;
+  citation?: string;
+  court?: string;
+  courtArea?: string;
+  link?: string;
+  similarity?: number;
   snippet?: string;
+}
+
+export interface RelatedJudgement {
+  id: string;
+  partyName: string;
+  court?: string;
+  facts?: string;
+  issue?: string;
+  held?: string;
+  ratio?: string;
+  link?: string;
+}
+
+export interface MessageAttachment {
+  filename: string;
+  contentType?: string;
+  size?: number;
+  downloadUrl: string;
 }
 
 export interface Attachment {

@@ -2,7 +2,7 @@
 import { isAxiosError } from "axios";
 import { api, endpoints } from "./api/api";
 import { promptSuggestions, workspaceModules } from "@/mock/workspace";
-import type { Attachment, ChatMessage, ChatThread, Citation, PromptSuggestion } from "@/types";
+import type { Attachment, ChatMessage, ChatThread, Citation, MessageAttachment, PromptSuggestion, RelatedJudgement } from "@/types";
 
 /**
  * Maps a workspace tool to the {provider, tool} pair the backend's
@@ -51,18 +51,38 @@ interface ApiEnvelope<T> {
 }
 
 interface BackendCitation {
-  id?: string;
-  title?: string;
-  type?: string;
-  ref?: string;
-  snippet?: string;
-  source_type?: string;
-  sourceType?: string;
-  url?: string;
-  heading?: string;
-  reference?: string;
-  link?: string;
+  id?: string | number;
+  source_no?: number;
   document_type?: string;
+  heading?: string;
+  title?: string;
+  reference?: string;
+  citation?: string;
+  court?: string;
+  court_name?: string;
+  court_area?: string;
+  link?: string;
+  url?: string;
+  similarity?: number;
+  snippet?: string;
+}
+
+interface BackendRelatedJudgement {
+  id?: string | number;
+  partyname?: string;
+  court?: string;
+  facts?: string;
+  issue?: string;
+  held?: string;
+  ratio?: string;
+  link?: string;
+}
+
+interface BackendAttachment {
+  filename?: string;
+  content_type?: string;
+  size?: number;
+  download_url?: string;
 }
 
 /** Shape returned by ChatService.serialize_message on the backend. */
@@ -76,7 +96,10 @@ interface BackendMessage {
   confidence?: number | null;
   query_time_ms?: number | null;
   sources?: BackendCitation[] | null;
-  related_judgements?: unknown[] | null;
+  related_judgements?: BackendRelatedJudgement[] | null;
+  needs_clarification?: boolean | null;
+  deep_research_used?: boolean | null;
+  attachment?: BackendAttachment | null;
   feedback?: "up" | "down" | null;
   created_at: string;
 }
@@ -110,29 +133,65 @@ interface BackendQueryResult {
     confidence?: number | null;
     query_time_ms?: number | null;
     sources?: BackendCitation[] | null;
-    related_judgements?: unknown[] | null;
+    related_judgements?: BackendRelatedJudgement[] | null;
+    needs_clarification?: boolean | null;
+    deep_research_used?: boolean | null;
     verification?: unknown;
     pipeline?: unknown;
     created_at: string;
   };
 }
 
+const titleCase = (s: string) => s.replace(/[_-]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
 const normalizeCitation = (citation: BackendCitation, index: number): Citation => {
-  const type = citation.type ?? citation.source_type ?? citation.sourceType ?? citation.document_type ?? "act";
+  const rawType = citation.document_type ?? "Source";
   return {
-    id: citation.id ? String(citation.id) : `${type}-${index}-${citation.title ?? citation.heading ?? "item"}`,
-    title: citation.title ?? citation.heading ?? "Untitled source",
-    type:
-      type === "case" || type === "act" || type === "circular" || type === "notification"
-        ? type
-        : "act",
-    ref: citation.ref ?? citation.reference ?? citation.url ?? citation.link ?? "Source",
+    id: citation.id != null ? String(citation.id) : `${rawType}-${index}-${citation.heading ?? citation.title ?? "item"}`,
+    sourceNo: citation.source_no,
+    // Vendor's own document_type, passed through as-is (title-cased for
+    // display) rather than collapsed into a fixed set — this is what was
+    // making every non-"act" source display as "ACTS" before: unrecognized
+    // types silently fell back to a hardcoded default.
+    documentType: titleCase(rawType),
+    heading: citation.heading ?? citation.title ?? "Untitled source",
+    reference: citation.reference,
+    citation: citation.citation,
+    court: citation.court ?? citation.court_name,
+    courtArea: citation.court_area,
+    link: citation.link ?? citation.url,
+    similarity: citation.similarity,
     snippet: citation.snippet,
   };
 };
 
 const normalizeCitations = (sources: BackendCitation[] | null | undefined): Citation[] =>
+  // Vendor ordering is preserved — no sort applied.
   (sources ?? []).map((source, index) => normalizeCitation(source, index));
+
+const normalizeRelatedJudgement = (j: BackendRelatedJudgement, index: number): RelatedJudgement => ({
+  id: j.id != null ? String(j.id) : `related-${index}-${j.partyname ?? "case"}`,
+  partyName: j.partyname ?? "Untitled case",
+  court: j.court,
+  facts: j.facts,
+  issue: j.issue,
+  held: j.held,
+  ratio: j.ratio,
+  link: j.link,
+});
+
+const normalizeRelatedJudgements = (list: BackendRelatedJudgement[] | null | undefined): RelatedJudgement[] =>
+  (list ?? []).map(normalizeRelatedJudgement);
+
+const normalizeAttachment = (a: BackendAttachment | null | undefined): MessageAttachment | undefined =>
+  a?.filename
+    ? {
+        filename: a.filename,
+        contentType: a.content_type,
+        size: a.size,
+        downloadUrl: a.download_url ?? "",
+      }
+    : undefined;
 
 /** Normalizes a message that already came pre-shaped from the backend's `serialize_message`. */
 const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
@@ -141,6 +200,10 @@ const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
   content: message.content ?? "",
   createdAt: message.created_at,
   citations: normalizeCitations(message.sources),
+  relatedJudgements: normalizeRelatedJudgements(message.related_judgements),
+  needsClarification: message.needs_clarification ?? false,
+  deepResearchUsed: message.deep_research_used ?? false,
+  attachment: normalizeAttachment(message.attachment),
   attachments: [],
   feedback: message.feedback ?? undefined,
 });
@@ -289,6 +352,9 @@ export const chatService = {
         content: assistantMessage.answer,
         createdAt: assistantMessage.created_at,
         citations: normalizeCitations(assistantMessage.sources),
+        relatedJudgements: normalizeRelatedJudgements(assistantMessage.related_judgements),
+        needsClarification: assistantMessage.needs_clarification ?? false,
+        deepResearchUsed: assistantMessage.deep_research_used ?? false,
         attachments: [],
       },
       thread: normalizedThread,
@@ -353,6 +419,9 @@ export const chatService = {
         content: assistantMessage.answer,
         createdAt: assistantMessage.created_at,
         citations: normalizeCitations(assistantMessage.sources),
+        relatedJudgements: normalizeRelatedJudgements(assistantMessage.related_judgements),
+        needsClarification: assistantMessage.needs_clarification ?? false,
+        deepResearchUsed: assistantMessage.deep_research_used ?? false,
         attachments: [],
       },
       thread: normalizedThread,
