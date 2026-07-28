@@ -21,7 +21,7 @@ export interface ApiEnv {
 
 const env: ApiEnv = {
   baseURL: (import.meta.env.VITE_API_BASE_URL as string) ?? "/api",
-  timeout: 60_000,
+  timeout: 180_000,
 };
 
 function getAuthToken(): string | null {
@@ -58,13 +58,6 @@ function createApi(config: Partial<ApiEnv> = {}): AxiosInstance {
           return instance.request(original);
         }
 
-        // No refresh mechanism exists yet (`refreshAuthToken` is a stub),
-        // so a 401 here always means the session is gone — expired (backend
-        // sessions time out after 8h), invalidated (logging in elsewhere
-        // invalidates prior sessions), or was never present. Previously this
-        // just rejected silently: every /ai/* call in the workspace (message
-        // list, send, etc.) would fail with no explanation and no way back
-        // to a working state short of manually clearing storage.
         useAuthStore.getState().clear();
         useChatStore.getState().reset();
         useWorkspaceStore.getState().reset();
