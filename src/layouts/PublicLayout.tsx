@@ -91,35 +91,58 @@ function TopNav() {
         </nav>
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
-          <Button
-            asChild
-            size="sm"
-            className="gap-1 gradient-primary text-primary-foreground shadow-soft"
-          >
-            <Link to={isAuthenticated ? "/workspace" : "/login"}>
-              Open Workspace
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
 
           {isAuthenticated ? (
-            <UserMenu />
+            <>
+              <Button
+                asChild
+                size="sm"
+                className="gap-1 gradient-primary text-primary-foreground shadow-soft"
+              >
+                <Link to="/workspace">
+                  Open Workspace
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+
+              <UserMenu />
+            </>
           ) : (
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="hidden sm:inline-flex"
-            >
-              <Link to="/login">Sign in</Link>
-            </Button>
+            <>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="hidden sm:inline-flex"
+              >
+                <Link to="/login">Sign In</Link>
+              </Button>
+
+              <Button
+                asChild
+                size="sm"
+                className="hidden sm:inline-flex gap-1 gradient-primary text-primary-foreground shadow-soft"
+              >
+                <Link to="/register">
+                  Register
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </Button>
+            </>
           )}
+
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Menu"
+              >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
+
             <SheetContent side="right" className="w-72">
               <div className="mt-8 flex flex-col gap-1">
                 {publicNav.map((item) =>
@@ -139,44 +162,61 @@ function TopNav() {
                     >
                       {item.label}
                     </Link>
-                  ),
+                  )
                 )}
-                {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/profile"
-                    className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
-                  >
-                    Profile
-                  </Link>
 
-                  {user?.is_admin && (
+                {isAuthenticated ? (
+                  <>
                     <Link
-                      to="/admin"
+                      to="/workspace"
+                      className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                    >
+                      Open Workspace
+                    </Link>
+
+                    <Link
+                      to="/profile"
                       className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
                     >
-                      Admin Dashboard
+                      Profile
                     </Link>
-                  )}
 
-                  <button
-                    type="button"
-                    className="rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-secondary"
-                    onClick={() => {
-                      // logout here
-                    }}
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
-                >
-                  Sign in
-                </Link>
-              )}
+                    {user?.is_admin && (
+                      <Link
+                        to="/admin"
+                        className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+
+                    <button
+                      type="button"
+                      className="rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-secondary"
+                      onClick={() => {
+                        // logout
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="mt-4 rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                    >
+                      Sign In
+                    </Link>
+
+                    <Link
+                      to="/register"
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
               </div>
             </SheetContent>
           </Sheet>

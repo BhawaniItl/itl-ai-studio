@@ -51,7 +51,7 @@ function Login() {
     try {
       await authService.login(values.email, values.password, values.remember ?? false);
       toast.success("Signed in");
-      nav({ to: "/" });
+      nav({ to: "/workspace" });
     } catch {
       setError("Invalid email or password.");
     }
