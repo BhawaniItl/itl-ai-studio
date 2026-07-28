@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import {
   Copy, Check, Download, Wand2, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell,
   AlertTriangle, Loader2, HelpCircle, Microscope, Paperclip, FileType, Gavel, ListOrdered,
+  ChevronDown,
+  FileArchive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +18,22 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store";
 import { chatService } from "@/services/workspace.service";
 import type { ChatMessage, Citation } from "@/types";
+import { jsPDF } from "jspdf";
+import { saveAs } from "file-saver";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  HeadingLevel,
+  TextRun,
+} from "docx";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const REFINE_SUGGESTIONS = ["Make it more formal", "Summarize", "Explain in simple language", "Add more case law"];
 
@@ -56,30 +74,101 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
 
   const handleCopy = async () => {
     try {
-      // Copies the raw markdown source — pasting into another markdown-aware
-      // surface (Slack, Notion, GitHub, etc.) preserves formatting, matching
-      // how most markdown-based chat tools implement "copy".
-      await navigator.clipboard.writeText(message.content);
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(message.content);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = message.content;
+
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+
+        document.body.appendChild(textArea);
+
+        textArea.focus();
+        textArea.select();
+
+        document.execCommand("copy");
+
+        document.body.removeChild(textArea);
+      }
+
       setCopied(true);
       toast.success("Copied to clipboard");
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error("Couldn't copy — your browser blocked clipboard access.");
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      toast.error("Unable to copy.");
     }
   };
 
-  const handleExport = () => {
-    const blob = new Blob([message.content], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const stamp = new Date(message.createdAt).toISOString().slice(0, 19).replace(/[:T]/g, "-");
-    a.href = url;
-    a.download = `itl-ai-response-${stamp}.md`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    toast.success("Exported as Markdown");
+  const exportPdf = () => {
+    const pdf = new jsPDF();
+
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(18);
+    pdf.text("ITL AI", 20, 20);
+
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(11);
+
+    const lines = pdf.splitTextToSize(message.content, 170);
+
+    pdf.text(lines, 20, 35);
+
+    pdf.save(
+      `itl-ai-${new Date(message.createdAt)
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-")}.pdf`
+    );
+
+    toast.success("PDF exported");
+  };
+
+  const exportWord = async () => {
+    const doc = new Document({
+      sections: [
+        {
+          children: [
+            new Paragraph({
+              heading: HeadingLevel.HEADING_1,
+              children: [
+                new TextRun({
+                  text: "ITL AI",
+                  bold: true,
+                }),
+              ],
+            }),
+
+            new Paragraph(""),
+
+            ...message.content.split("\n").map(
+              (line) =>
+                new Paragraph({
+                  children: [new TextRun(line)],
+                })
+            ),
+          ],
+        },
+      ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+
+    saveAs(
+      blob,
+      `itl-ai-${new Date(message.createdAt)
+        .toISOString()
+        .slice(0, 19)
+        .replace(/[:T]/g, "-")}.docx`
+    );
+
+    toast.success("Word exported");
   };
 
   return (
@@ -104,9 +193,6 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
         </div>
       )}
       <div className={cn("max-w-3xl min-w-0", isUser ? "text-right" : "")}>
-        {/* needs_clarification: this is a clarifying QUESTION, not a real
-            answer — rendered with a distinct border/badge rather than as a
-            normal assistant reply, so it's never mistaken for one. */}
         {isClarification && (
           <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-amber-600">
             <HelpCircle className="h-3 w-3" />
@@ -214,9 +300,33 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
                 {copied ? "Copied" : "Copy"}
               </Button>
               {!isClarification && (
-                <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground" onClick={handleExport}>
-                  <Download className="h-3 w-3" /> Export
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground"
+                    >
+                      <Download className="h-3 w-3" />
+                      Export
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="start">
+
+                    <DropdownMenuItem onClick={exportPdf}>
+                      <FileArchive className="mr-2 h-4 w-4" />
+                      Export as PDF
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={exportWord}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Export as Word
+                    </DropdownMenuItem>
+
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
               {!isClarification && (
                 <Button
