@@ -17,7 +17,31 @@ export const adminService = {
     );
 
     return data;
-}
+},
+  async getUser(id: number) {
+    const { data } = await api.get(endpoints.adminUsers.detail(id));
+    return data;
+  },
+  async updateUser(id: number, patch: Record<string, unknown>) {
+    const { data } = await api.put(endpoints.adminUsers.update(id), patch);
+    return data;
+  },
+  async approveUser(id: number) {
+    const { data } = await api.patch(endpoints.adminUsers.approve(id));
+    return data;
+  },
+  async suspendUser(id: number) {
+    const { data } = await api.patch(endpoints.adminUsers.suspend(id));
+    return data;
+  },
+  async deleteUser(id: number) {
+    const { data } = await api.patch(endpoints.adminUsers.delete(id));
+    return data;
+  },
+  async getUserHistory(id: number) {
+    const { data } = await api.get(endpoints.adminUsers.history(id));
+    return data;
+  },
 };
 
 export const analyticsService = {
