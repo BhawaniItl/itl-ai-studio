@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { homeService } from "@/services/home.service";
 import { aboutService } from "@/services/about.service";
 import { pricingService } from "@/services/pricing.service";
@@ -39,6 +39,40 @@ export const useChatFolders = () =>
 const ADMIN_STALE = 5 * 60_000;
 export const useAdminMetrics = () => useQuery({ queryKey: ["admin", "metrics"], queryFn: () => adminService.getMetrics(), staleTime: ADMIN_STALE });
 export const useAdminUsers = (params: UserListParams,) => useQuery({ queryKey: ["admin", "users", params], queryFn: () => adminService.getUsers(params), staleTime: ADMIN_STALE, placeholderData: keepPreviousData,});
+
+export const useAdminUserDetail = (id: number | null) =>
+  useQuery({
+    queryKey: ["admin", "users", "detail", id],
+    queryFn: () => adminService.getUser(id!),
+    enabled: id != null,
+  });
+
+export const useAdminUserHistory = (id: number | null) =>
+  useQuery({
+    queryKey: ["admin", "users", "history", id],
+    queryFn: () => adminService.getUserHistory(id!),
+    enabled: id != null,
+  });
+
+function useAdminUserMutation<T = void>(mutationFn: (id: number, arg: T) => Promise<unknown>) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, arg }: { id: number; arg: T }) => mutationFn(id, arg),
+    onSuccess: () => {
+      // Every action (approve/suspend/delete/update) changes what the list
+      // and the detail view should show — invalidate both broadly rather
+      // than trying to patch the cache by hand.
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+export const useApproveUser = () => useAdminUserMutation<void>((id) => adminService.approveUser(id));
+export const useSuspendUser = () => useAdminUserMutation<void>((id) => adminService.suspendUser(id));
+export const useDeleteUser = () => useAdminUserMutation<void>((id) => adminService.deleteUser(id));
+export const useUpdateUser = () =>
+  useAdminUserMutation<Record<string, unknown>>((id, patch) => adminService.updateUser(id, patch));
+
 export const useAdminNav = () => useQuery({ queryKey: ["admin", "nav"], queryFn: () => adminService.getNav(), staleTime: Infinity });
 export const useAnalytics = () => useQuery({ queryKey: ["analytics"], queryFn: () => analyticsService.getOverview(), staleTime: ADMIN_STALE });
 
