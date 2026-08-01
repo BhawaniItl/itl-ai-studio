@@ -18,15 +18,9 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store";
 import { chatService } from "@/services/workspace.service";
 import type { ChatMessage, Citation } from "@/types";
-import { jsPDF } from "jspdf";
-import { saveAs } from "file-saver";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  HeadingLevel,
-  TextRun,
-} from "docx";
+// jspdf / docx / file-saver are heavy (~700KB combined) and only needed when a
+// user actually exports a message. They're imported dynamically inside the
+// export handlers so they never land in the initial bundle.
 
 import {
   DropdownMenu,
