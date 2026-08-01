@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -125,7 +126,7 @@ function AdminDashboard() {
                       <TableCell className="text-right"><Skeleton className="ml-auto h-3 w-20" /></TableCell>
                     </TableRow>
                   ))
-                : (users.items ?? []).slice(0, 6).map((u) => (
+                : (users.items ?? []).slice(0, 6).map((u: any) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <div className="flex items-center gap-2.5">

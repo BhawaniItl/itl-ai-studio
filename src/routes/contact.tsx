@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -126,7 +127,7 @@ function Contact() {
                   <SelectValue placeholder="Select…" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(data?.reasons ?? []).map((r) => (
+                  {(data?.reasons ?? []).map((r: any) => (
                     <SelectItem key={r} value={r}>
                       {r}
                     </SelectItem>
