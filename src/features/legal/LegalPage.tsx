@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll } from "framer-motion";
