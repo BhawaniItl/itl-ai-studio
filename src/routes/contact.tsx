@@ -126,7 +126,7 @@ function Contact() {
                   <SelectValue placeholder="Select…" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(data?.reasons ?? []).map((r) => (
+                  {(data?.reasons ?? []).map((r: any) => (
                     <SelectItem key={r} value={r}>
                       {r}
                     </SelectItem>

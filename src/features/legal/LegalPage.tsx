@@ -24,7 +24,7 @@ export function LegalPage({ slug }: { slug: string }) {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     if (!needle) return sections;
-    return sections.filter((s) => s.heading.toLowerCase().includes(needle) || s.body.toLowerCase().includes(needle));
+    return sections.filter((s: any) => s.heading.toLowerCase().includes(needle) || s.body.toLowerCase().includes(needle));
   }, [sections, q]);
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export function LegalPage({ slug }: { slug: string }) {
               On this page
             </p>
             <nav className="space-y-1 border-l border-border pl-3">
-              {sections.map((s) => {
+              {sections.map((s: any) => {
                 const id = slugify(s.heading);
                 const isActive = active === id;
                 return (
@@ -140,7 +140,7 @@ export function LegalPage({ slug }: { slug: string }) {
             {filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground">No sections match your search.</p>
             ) : (
-              filtered.map((s) => {
+              filtered.map((s: any) => {
                 const id = slugify(s.heading);
                 return (
                   <section key={id} id={id}>
