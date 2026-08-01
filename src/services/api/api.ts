@@ -21,8 +21,12 @@ export interface ApiEnv {
 
 const env: ApiEnv = {
   baseURL: (import.meta.env.VITE_API_BASE_URL as string) ?? "/api",
-  timeout: 180_000,
+  // PERF: was 180s — an unreachable/blocked host left every request hanging for
+  // three minutes with spinners on screen. Streaming endpoints set their own
+  // longer timeout at the call site.
+  timeout: 20_000,
 };
+
 
 function getAuthToken(): string | null {
   return useAuthStore.getState().token;
