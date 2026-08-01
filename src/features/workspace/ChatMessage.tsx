@@ -100,7 +100,8 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
     }
   };
 
-  const exportPdf = () => {
+  const exportPdf = async () => {
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF();
 
     pdf.setFont("helvetica", "bold");
@@ -125,6 +126,9 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
   };
 
   const exportWord = async () => {
+    const [{ Document, Packer, Paragraph, HeadingLevel, TextRun }, { saveAs }] =
+      await Promise.all([import("docx"), import("file-saver")]);
+
     const doc = new Document({
       sections: [
         {
@@ -155,6 +159,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
     const blob = await Packer.toBlob(doc);
 
     saveAs(
+
       blob,
       `itl-ai-${new Date(message.createdAt)
         .toISOString()
