@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -50,7 +51,7 @@ function PagesPage() {
   }, [pages, selectedSlug]);
 
   const originals = useMemo(
-    () => Object.fromEntries(pages.map((p) => [p.slug, p])),
+    () => Object.fromEntries(pages.map((p: any) => [p.slug, p])),
     [pages],
   );
 
@@ -177,7 +178,7 @@ function PagesPage() {
             Pages
           </p>
           <div className="space-y-1">
-            {pages.map((p) => {
+            {pages.map((p: any) => {
               const isActive = p.slug === selectedSlug;
               const isDirty = Boolean(drafts[p.slug]);
               return (

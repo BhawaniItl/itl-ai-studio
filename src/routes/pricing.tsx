@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -75,7 +76,7 @@ function Pricing() {
       {/* Plans */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid gap-5 md:grid-cols-3">
-          {plans.map((p, i) => {
+          {plans.map((p: any, i: any) => {
             const price = cycle === "yearly" && p.yearlyPrice != null ? p.yearlyPrice : p.price;
             const suffix = p.price === 0 ? "" : cycle === "yearly" ? "/ year" : "/ month";
             return (
@@ -119,7 +120,7 @@ function Pricing() {
                   </Link>
                 </Button>
                 <ul className="mt-6 space-y-2.5">
-                  {p.features.map((f) => (
+                  {p.features.map((f: any) => (
                     <li key={f} className="flex items-start gap-2 text-sm">
                       <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                       <span>{f}</span>
@@ -138,18 +139,18 @@ function Pricing() {
         <div className="overflow-hidden rounded-3xl border border-border/60 bg-card shadow-soft">
           <div className="grid grid-cols-[1.4fr_repeat(3,1fr)] gap-2 border-b border-border/60 bg-surface-2/40 px-5 py-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             <span>Capability</span>
-            {plans.map((p) => (
+            {plans.map((p: any) => (
               <span key={p.id} className={cn("text-center", p.featured && "text-primary")}>
                 {p.name}
               </span>
             ))}
           </div>
-          {comparison.groups.map((g) => (
+          {comparison.groups.map((g: any) => (
             <div key={g.name}>
               <div className="border-y border-border/60 bg-surface-2/30 px-5 py-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {g.name}
               </div>
-              {g.rows.map((r, i) => (
+              {g.rows.map((r: any, i: any) => (
                 <div
                   key={r.label}
                   className={cn(
@@ -158,7 +159,7 @@ function Pricing() {
                   )}
                 >
                   <span>{r.label}</span>
-                  {r.values.map((v, j) => (
+                  {r.values.map((v: any, j: any) => (
                     <div key={j} className="text-center">
                       {typeof v === "boolean" ? (
                         v ? <Check className="mx-auto h-4 w-4 text-success" /> : <Minus className="mx-auto h-4 w-4 text-muted-foreground/40" />
@@ -195,7 +196,7 @@ function Pricing() {
               </Button>
             </div>
             <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {enterprise.bullets.map((b) => (
+              {enterprise.bullets.map((b: any) => (
                 <li key={b} className="flex items-start gap-2 rounded-xl border border-border/60 bg-surface p-3 text-sm">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   <span>{b}</span>
@@ -211,7 +212,7 @@ function Pricing() {
         <SectionHeader eyebrow="FAQ" title="Pricing questions." />
         <div className="rounded-3xl border border-border/60 bg-card p-2 shadow-soft">
           <Accordion type="single" collapsible className="w-full">
-            {faqs.map((f, i) => (
+            {faqs.map((f: any, i: any) => (
               <AccordionItem key={i} value={`i-${i}`} className="border-border/50 px-4 last:border-b-0">
                 <AccordionTrigger className="text-left text-base font-semibold">{f.q}</AccordionTrigger>
                 <AccordionContent className="text-sm leading-relaxed text-muted-foreground">{f.a}</AccordionContent>

@@ -18,15 +18,9 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store";
 import { chatService } from "@/services/workspace.service";
 import type { ChatMessage, Citation } from "@/types";
-import { jsPDF } from "jspdf";
-import { saveAs } from "file-saver";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  HeadingLevel,
-  TextRun,
-} from "docx";
+// jspdf / docx / file-saver are heavy (~700KB combined) and only needed when a
+// user actually exports a message. They're imported dynamically inside the
+// export handlers so they never land in the initial bundle.
 
 import {
   DropdownMenu,
@@ -106,7 +100,8 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
     }
   };
 
-  const exportPdf = () => {
+  const exportPdf = async () => {
+    const { jsPDF } = await import("jspdf");
     const pdf = new jsPDF();
 
     pdf.setFont("helvetica", "bold");
@@ -131,6 +126,9 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
   };
 
   const exportWord = async () => {
+    const [{ Document, Packer, Paragraph, HeadingLevel, TextRun }, { saveAs }] =
+      await Promise.all([import("docx"), import("file-saver")]);
+
     const doc = new Document({
       sections: [
         {
@@ -161,6 +159,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
     const blob = await Packer.toBlob(doc);
 
     saveAs(
+
       blob,
       `itl-ai-${new Date(message.createdAt)
         .toISOString()
