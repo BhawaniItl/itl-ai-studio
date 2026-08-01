@@ -65,23 +65,25 @@ export const authService = {
     return data;
   },
 
-  async requestPasswordOtp() {
+  // OTP flows are not wired to the backend yet. Signatures match the call
+  // sites so the UI compiles and fails loudly instead of silently.
+  async requestPasswordOtp(_email: string): Promise<void> {
     throw new Error("Not implemented");
   },
 
-  async verifyPasswordOtp() {
+  async verifyPasswordOtp(_email: string, _otp: string): Promise<{ ok: boolean }> {
     throw new Error("Not implemented");
   },
 
-  async resetPassword() {
+  async resetPassword(_email: string, _password: string): Promise<void> {
     throw new Error("Not implemented");
   },
 
-  async requestEmailOtp() {
+  async requestEmailOtp(_email: string): Promise<void> {
     throw new Error("Not implemented");
   },
 
-  async verifyEmailOtp() {
+  async verifyEmailOtp(_email: string, _otp: string): Promise<{ ok: boolean }> {
     throw new Error("Not implemented");
   },
 };
