@@ -7,8 +7,7 @@ import { toast } from "sonner";
 import {
   Copy, Check, Download, Wand2, ThumbsDown, ThumbsUp, Scale, FileText, BookOpen, Bell,
   AlertTriangle, Loader2, HelpCircle, Microscope, Paperclip, FileType, Gavel, ListOrdered,
-  ChevronDown,
-  FileArchive,
+  ChevronDown, FileArchive,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +17,6 @@ import { cn } from "@/lib/utils";
 import { useChatStore } from "@/store";
 import { chatService } from "@/services/workspace.service";
 import type { ChatMessage, Citation } from "@/types";
-// jspdf / docx / file-saver are heavy (~700KB combined) and only needed when a
-// user actually exports a message. They're imported dynamically inside the
-// export handlers so they never land in the initial bundle.
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,6 +52,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
   const isUser = message.role === "user";
   const isError = message.status === "error";
   const isPending = message.status === "pending";
+  const isProcessing = message.status === "processing";
   const isClarification = !isUser && message.needsClarification;
   const [copied, setCopied] = useState(false);
   const [isRefineOpen, setIsRefineOpen] = useState(false);
@@ -158,6 +154,9 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
         </div>
       )}
       <div className={cn("max-w-3xl min-w-0", isUser ? "text-right" : "")}>
+        {/* needs_clarification: this is a clarifying QUESTION, not a real
+            answer — rendered with a distinct border/badge rather than as a
+            normal assistant reply, so it's never mistaken for one. */}
         {isClarification && (
           <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium text-amber-600">
             <HelpCircle className="h-3 w-3" />
@@ -194,6 +193,8 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
         >
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
+          ) : isProcessing ? (
+            <ProcessingIndicator progress={message.progress} stage={message.stage} />
           ) : (
             <div className="markdown-body space-y-2 text-[15px] leading-[1.7]">
               <ReactMarkdown
@@ -241,7 +242,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
           )}
         </div>
 
-        {!isUser && !isError && !isClarification && message.deepResearchUsed && (
+        {!isUser && !isError && !isClarification && !isProcessing && message.deepResearchUsed && (
           <div className="mt-2">
             <Badge variant="outline" className="gap-1 rounded-full border-violet-500/30 bg-violet-500/10 py-0.5 text-[10px] text-violet-600">
               <Microscope className="h-2.5 w-2.5" /> Deep Research
@@ -249,7 +250,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
           </div>
         )}
 
-        {!isUser && !isError && !isClarification && message.citations && message.citations.length > 0 && (
+        {!isUser && !isError && !isClarification && !isProcessing && message.citations && message.citations.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
             {message.citations.map((c) => (
               <CitationChip key={c.id} citation={c} messageId={message.id} />
@@ -257,7 +258,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
           </div>
         )}
 
-        {!isUser && !isError && (
+        {!isUser && !isError && !isProcessing && (
           <>
             <div className="mt-2 flex items-center gap-1">
               <Button variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground" onClick={handleCopy}>
@@ -277,20 +278,15 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-
                   <DropdownMenuContent align="start">
-
                     <DropdownMenuItem onClick={exportPdf} disabled={exporting !== null}>
                       <FileArchive className="mr-2 h-4 w-4" />
                       Export as PDF
                     </DropdownMenuItem>
-
                     <DropdownMenuItem onClick={exportWord} disabled={exporting !== null}>
                       <FileText className="mr-2 h-4 w-4" />
                       Export as Word
                     </DropdownMenuItem>
-
-
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -478,6 +474,25 @@ function RefineDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ProcessingIndicator({ progress, stage }: { progress?: number; stage?: string }) {
+  const pct = Math.round((progress ?? 0) * 100);
+  return (
+    <div className="py-1">
+      <div className="mb-1.5 flex items-center gap-2 text-[13px] text-muted-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        {stage || "Processing your document…"}
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-500"
+          style={{ width: `${Math.max(4, pct)}%` }}
+        />
+      </div>
+      {progress != null && <p className="mt-1 text-[11px] text-muted-foreground">{pct}%</p>}
+    </div>
   );
 }
 

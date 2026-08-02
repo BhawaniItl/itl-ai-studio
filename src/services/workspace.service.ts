@@ -5,7 +5,18 @@ import { api, endpoints } from "./api/api";
 import { promptSuggestions, workspaceModules } from "@/mock/workspace";
 import type { Attachment, ChatMessage, ChatThread, Citation, MessageAttachment, PromptSuggestion, RelatedJudgement } from "@/types";
 
-
+/**
+ * Maps a workspace tool to the {provider, tool} pair the backend's
+ * /ai/query expects. Confirmed against the vendor's own Django reference
+ * client (core/views.py + core/case_law_research_views.py) — critically,
+ * "Case Law Research" is NOT `provider: main, tool: case-laws` (that's a
+ * different, secondary endpoint requiring a context_answer). It's its own
+ * provider — the judgement/premium search bot.
+ *
+ * Tools not listed here have no working backend yet (see mock/workspace.ts
+ * `disabled` flags) — sendMessage() refuses to call for them rather than
+ * silently falling back to Ask Bot.
+ */
 const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }> = {
   ask: { provider: "main", tool: "chat" },
   "case-law": { provider: "premium", tool: "search" },
@@ -13,7 +24,12 @@ const TOOL_BACKEND_ROUTE_MAP: Record<string, { provider: string; tool: string }>
   summarize: { provider: "summarizer", tool: "summarize" },
 };
 
-
+/**
+ * Tools backed by the multipart file-upload endpoints (/ai/notice/generate,
+ * /ai/summarize) rather than the JSON /ai/query endpoint — confirmed against
+ * core/draft_assistant.py and core/summarizer.py, which both accept a file
+ * as optional (zero-or-more), never required.
+ */
 const FILE_TOOL_ENDPOINTS: Record<string, string> = {
   "notice-reply": endpoints.ai.noticeGenerate,
   summarize: endpoints.ai.summarize,
@@ -85,6 +101,7 @@ interface BackendMessage {
   needs_clarification?: boolean | null;
   deep_research_used?: boolean | null;
   attachment?: BackendAttachment | null;
+  job_id?: string | null;
   feedback?: "up" | "down" | null;
   created_at: string;
 }
@@ -114,7 +131,9 @@ interface BackendQueryResult {
   };
   assistant_message: {
     id: number | string;
-    answer: string;
+    answer: string | null;
+    status?: string;
+    job_id?: string | null;
     confidence?: number | null;
     query_time_ms?: number | null;
     sources?: BackendCitation[] | null;
@@ -239,6 +258,7 @@ function normalizeNoticeSources(
   return normalizeCitations(citations);
 }
 
+
 const normalizeRelatedJudgements = (list: BackendRelatedJudgement[] | null | undefined): RelatedJudgement[] =>
   (list ?? []).map(normalizeRelatedJudgement);
 
@@ -268,6 +288,8 @@ const normalizeStoredMessage = (message: BackendMessage): ChatMessage => ({
   attachment: normalizeAttachment(message.attachment),
   attachments: [],
   feedback: message.feedback ?? undefined,
+  status: message.status === "processing" ? "processing" : message.status === "error" ? "error" : undefined,
+  jobId: message.job_id ?? undefined,
 });
 
 const normalizeThread = (
@@ -411,7 +433,7 @@ export const chatService = {
       assistantMessage: {
         id: String(assistantMessage.id),
         role: "assistant",
-        content: assistantMessage.answer,
+        content: assistantMessage.answer ?? "",
         createdAt: assistantMessage.created_at,
         citations: normalizeCitations(assistantMessage.sources),
         relatedJudgements: normalizeRelatedJudgements(assistantMessage.related_judgements),
@@ -478,7 +500,7 @@ export const chatService = {
       assistantMessage: {
         id: String(assistantMessage.id),
         role: "assistant",
-        content: assistantMessage.answer,
+        content: assistantMessage.answer ?? "",
         createdAt: assistantMessage.created_at,
         citations:
           context.toolId === "notice-reply"
@@ -487,6 +509,8 @@ export const chatService = {
         relatedJudgements: normalizeRelatedJudgements(assistantMessage.related_judgements),
         needsClarification: assistantMessage.needs_clarification ?? false,
         deepResearchUsed: assistantMessage.deep_research_used ?? false,
+        status: assistantMessage.status === "processing" ? "processing" : undefined,
+        jobId: assistantMessage.job_id ?? undefined,
         attachments: [],
       },
       thread: normalizedThread,
@@ -528,5 +552,41 @@ export const chatService = {
       instruction,
     });
     return normalizeStoredMessage(data.data);
+  },
+
+  /** GET /ai/summarize/status/{job_id} — progress info for an async Summarizer job. */
+  getSummarizeStatus: async (
+    jobId: string,
+  ): Promise<{ status: string; stage?: string; progress?: number }> => {
+    const { data } = await api.get<ApiEnvelope<{ status: string; stage?: string; progress?: number }>>(
+      endpoints.ai.summarizeStatus(jobId),
+    );
+    return data.data;
+  },
+
+  /**
+   * GET /ai/summarize/result/{job_id} — call once status is "done". Returns
+   * `ready: false` (with progress) if polled too early, or the finalized
+   * message once ready. Idempotent on the backend.
+   */
+  getSummarizeResult: async (
+    jobId: string,
+  ): Promise<
+    | { ready: true; conversationId: string; message: ChatMessage }
+    | { ready: false; status?: string; stage?: string; progress?: number }
+  > => {
+    const { data } = await api.get<
+      ApiEnvelope<{ ready: boolean; conversation_id?: number; message?: BackendMessage; status?: string; stage?: string; progress?: number }>
+    >(endpoints.ai.summarizeResult(jobId));
+
+    if (data.data.ready && data.data.message) {
+      return {
+        ready: true,
+        conversationId: String(data.data.conversation_id),
+        message: normalizeStoredMessage(data.data.message),
+      };
+    }
+
+    return { ready: false, status: data.data.status, stage: data.data.stage, progress: data.data.progress };
   },
 };

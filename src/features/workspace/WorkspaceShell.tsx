@@ -51,6 +51,7 @@ export function WorkspaceShell() {
   const threads = useChatStore((s) => s.threads);
   const addMessage = useChatStore((s) => s.addMessage);
   const replaceMessage = useChatStore((s) => s.replaceMessage);
+  const updateMessage = useChatStore((s) => s.updateMessage);
   const createThread = useChatStore((s) => s.createThread);
   const deleteThread = useChatStore((s) => s.deleteThread);
   const upsertThread = useChatStore((s) => s.upsertThread);
@@ -108,6 +109,57 @@ export function WorkspaceShell() {
         loadingHistoryFor.current.delete(thread.id);
       });
   }, [thread, upsertThread]);
+
+  // ------------------------------------------------------------------
+  // Async job polling (Summarizer large-document flow) — any message
+  // that comes back with status "processing" + a jobId gets polled here
+  // automatically until it resolves, regardless of which thread it's on.
+  // ------------------------------------------------------------------
+  const pollingJobsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const processingMessages = threads.flatMap((t) =>
+      t.messages.filter((m) => m.status === "processing" && m.jobId).map((m) => ({ threadId: t.id, message: m })),
+    );
+
+    for (const { threadId: msgThreadId, message } of processingMessages) {
+      const jobId = message.jobId!;
+      if (pollingJobsRef.current.has(jobId)) continue;
+      pollingJobsRef.current.add(jobId);
+
+      (async () => {
+        try {
+          // eslint-disable-next-line no-constant-condition
+          while (true) {
+            const s = await chatService.getSummarizeStatus(jobId);
+            updateMessage(msgThreadId, message.id, { progress: s.progress, stage: s.stage });
+
+            if (s.status === "done") {
+              const result = await chatService.getSummarizeResult(jobId);
+              if (result.ready) {
+                replaceMessage(msgThreadId, message.id, result.message);
+              } else {
+                // Vendor said done but result isn't ready yet — one more pass.
+                continue;
+              }
+              break;
+            }
+
+            if (s.status === "error") {
+              replaceMessage(msgThreadId, message.id, createErrorMessage());
+              break;
+            }
+
+            await new Promise((r) => setTimeout(r, 2500));
+          }
+        } catch {
+          replaceMessage(msgThreadId, message.id, createErrorMessage());
+        } finally {
+          pollingJobsRef.current.delete(jobId);
+        }
+      })();
+    }
+  }, [threads, updateMessage, replaceMessage]);
 
   // ------------------------------------------------------------------
   // Auto-scroll — fires on every state change that can move the bottom
