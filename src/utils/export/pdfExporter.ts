@@ -114,7 +114,7 @@ export function renderPdf(
           doc.setTextColor(MAROON[0], MAROON[1], MAROON[2]);
         }
         doc.text(t.text, x, y);
-        if (t.run.underline || (t.run.link && !t.space)) {
+        if (t.run.underline || t.run.link) {
           doc.setDrawColor(c[0], c[1], c[2]);
           doc.setLineWidth(0.4);
           doc.line(x, y + 1.6, x + t.width, y + 1.6);
