@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable prettier/prettier */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useLegal } from "@/hooks";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -137,7 +140,8 @@ export function LegalPage({ slug }: { slug: string }) {
         </aside>
 
         <article ref={articleRef} className="rounded-3xl border border-border/60 bg-card p-6 shadow-soft md:p-10">
-          <div className="prose-lg space-y-8">
+          <div
+            className="prose prose-neutral max-w-none leading-8 text-[15px] prose-headings:scroll-mt-28 prose-h2:mt-10 prose-h2:mb-5 prose-h3:mt-8 prose-h3:mb-4 prose-p:my-4 prose-ul:my-5 prose-ol:my-5 prose-li:my-1 prose-table:my-8 prose-th:bg-muted prose-code:bg-muted prose-code:px-1 prose-code:rounded">
             {filtered.length === 0 ? (
               <p className="text-sm text-muted-foreground">No sections match your search.</p>
             ) : (
@@ -151,7 +155,10 @@ export function LegalPage({ slug }: { slug: string }) {
                     >
                       {s.heading}
                     </h2>
-                    <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{s.body}</p>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}>
+                      {s.body}
+                    </ReactMarkdown>
                   </section>
                 );
               })
