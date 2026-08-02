@@ -1,7 +1,8 @@
 /* eslint-disable prettier/prettier */
-import type { ChatMessage } from "@/types";
+import type { ChatMessage, ImportContentResponse } from "@/types";
 import { buildExportDocument } from "./buildDocument";
 import type { ExportDocument } from "./types";
+import { api, endpoints } from "@/services/api/api";
 
 export type { ExportDocument, Block, InlineRun } from "./types";
 export { parseMarkdown, parseInline } from "./markdownParser";
@@ -9,9 +10,7 @@ export { buildExportDocument } from "./buildDocument";
 
 export interface ExportOptions {
   message: ChatMessage;
-  /** The user prompt that produced this answer, shown as the document "Query". */
   question?: string;
-  /** e.g. "Notice Reply", "Case Law Research" — becomes the document subtitle. */
   subtitle?: string;
 }
 
@@ -49,4 +48,21 @@ export async function exportMessageAsWord(opts: ExportOptions): Promise<void> {
 
   const blob = await docx.Packer.toBlob(buildDocx(docx, model));
   await saveBlob(blob, `${model.fileName}.docx`);
+}
+
+export async function importContentDocument(
+    file: File,
+): Promise<ImportContentResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post<ImportContentResponse>(
+        endpoints.books.importContent,
+        formData,
+        {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        },
+    );
+    return data;
 }
