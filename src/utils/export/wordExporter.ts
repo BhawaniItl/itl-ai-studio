@@ -400,27 +400,12 @@ export function buildDocx(docx: DocxModule, model: ExportDocument) {
           }),
         },
         footers: {
-          default: new Footer({
-            children: [
-              new Paragraph({
-                tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
-                border: { top: { style: BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } },
-                children: [
-                  new TextRun({
-                    text: `${model.brand} \u2014 Income Tax Library AI`,
-                    size: 16,
-                    color: MUTED,
-                    font: "Arial",
-                  }),
-                  new TextRun({ text: "\tPage ", size: 16, color: MUTED, font: "Arial" }),
-                  new TextRun({ children: [PageNumber.CURRENT], size: 16, color: MUTED, font: "Arial" }),
-                  new TextRun({ text: " of ", size: 16, color: MUTED, font: "Arial" }),
-                  new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: MUTED, font: "Arial" }),
-                ],
-              }),
-            ],
-          }),
+          // `titlePage: true` gives page 1 its own header/footer slot — both slots
+          // get the same footer so page numbering is continuous.
+          first: makeFooter(),
+          default: makeFooter(),
         },
+
         children: children as never[],
       },
     ],
