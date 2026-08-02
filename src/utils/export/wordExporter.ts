@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+import type { Paragraph as ParagraphType, ParagraphChild, Table as TableType } from "docx";
 import type { Block, ExportDocument, InlineRun } from "./types";
 
 /**
@@ -45,8 +46,11 @@ export function buildDocx(docx: DocxModule, model: ExportDocument) {
     VerticalAlign,
   } = docx;
 
-  const inline = (runs: InlineRun[], base: { size?: number; color?: string; italics?: boolean } = {}) =>
-    runs.flatMap((r) => {
+  const inline = (
+    runs: InlineRun[],
+    base: { size?: number; color?: string; italics?: boolean } = {},
+  ): ParagraphChild[] =>
+    runs.flatMap<ParagraphChild>((r) => {
       const run = new TextRun({
         text: r.text,
         bold: r.bold,
@@ -70,7 +74,7 @@ export function buildDocx(docx: DocxModule, model: ExportDocument) {
   const alignOf = (a: "left" | "center" | "right") =>
     a === "center" ? AlignmentType.CENTER : a === "right" ? AlignmentType.RIGHT : AlignmentType.LEFT;
 
-  const children: (typeof Paragraph.prototype | typeof Table.prototype)[] = [];
+  const children: (ParagraphType | TableType)[] = [];
 
   /* ---------------- Cover ---------------- */
 
