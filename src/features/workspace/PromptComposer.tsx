@@ -241,7 +241,7 @@ export function PromptComposer({
         )}
       </form>
       <p className="mt-2 text-center text-[11px] text-muted-foreground">
-        Responses are grounded in Indian tax statute & case law. Always verify citations before advising clients.
+        Responses are grounded in Indian tax statute & case law. Always verify citations before advising clients
       </p>
     </div>
   );

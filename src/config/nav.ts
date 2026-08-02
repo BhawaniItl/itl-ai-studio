@@ -31,6 +31,7 @@ export const footerNav = {
   ],
   Legal: [
     { label: "Privacy Policy", to: "/privacy" },
+    { label: "Terms of Service", to: "/terms" },
     { label: "Refund Policy", to: "/refund" },
     { label: "Cancellation Policy", to: "/cancellation" },
   ],
