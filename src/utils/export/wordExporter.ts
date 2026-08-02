@@ -377,12 +377,15 @@ export function buildDocx(docx: DocxModule, model: ExportDocument) {
     sections: [
       {
         properties: {
+          // Cover page has its own big masthead — suppress the running header there.
+          titlePage: true,
           page: {
             size: { width: A4_W, height: A4_H },
             margin: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN },
           },
         },
         headers: {
+          first: new Header({ children: [new Paragraph({ children: [] })] }),
           default: new Header({
             children: [
               new Paragraph({
