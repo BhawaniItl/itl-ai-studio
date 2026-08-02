@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { api, endpoints } from "@/services/api/api";
 import { RichTextEditor } from "@/components/common/RichTextEditor";
+import { importContentDocument } from "@/utils/export";
 
 export interface ContentRecord {
   id: string;
@@ -107,6 +109,26 @@ export function ContentDialog({
       }),
       [bookId, currentContent, sectionId],
     ),
+  });
+
+  const importMutation = useMutation({
+      mutationFn: importContentDocument,
+      onSuccess: (result) => {
+          form.setValue("title", result.title);
+          form.setValue(
+              "content_html",
+              result.html_content,
+          );
+          form.setValue(
+              "content_text",
+              result.plain_text,
+          );
+          toast.success("Document imported.");
+      },
+
+      onError: () => {
+          toast.error("Unable to import document.");
+      },
   });
 
   useEffect(() => {
@@ -308,6 +330,31 @@ export function ContentDialog({
                   <FormItem className="md:col-span-2">
                     <FormLabel>Body</FormLabel>
                     <FormControl>
+                      <div className="flex items-center gap-3">
+                        {!isReadOnly && (
+                          <Button type="button" variant="outline" disabled={importMutation.isPending} asChild>
+                            <label> Import PDF / DOCX
+                                <input
+                                    hidden
+                                    type="file"
+                                    accept=".pdf,.docx"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            importMutation.mutate(file);
+                                        }
+                                        e.target.value = "";
+                                    }}
+                                />
+                            </label>
+                        </Button>
+                        )}
+                        {importMutation.isPending && (
+                                <div className="absolute inset-0 z-10 flex items-center justify-center -background/70">
+                                    Parsing document...
+                                </div>
+                            )}
+                      </div>
                       <RichTextEditor
                         content={field.value ?? ""}
                         onChange={(html, text) => {
@@ -329,7 +376,7 @@ export function ContentDialog({
                 {isReadOnly ? "Close" : "Cancel"}
               </Button>
               {!isReadOnly && (
-                <Button type="submit" disabled={mutation.isPending}>
+                <Button type="submit" disabled={mutation.isPending || importMutation.isPending}>
                   {mutation.isPending
                     ? "Saving..."
                     : mode === "edit"

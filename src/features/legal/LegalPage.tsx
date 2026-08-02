@@ -155,10 +155,19 @@ export function LegalPage({ slug }: { slug: string }) {
                     >
                       {s.heading}
                     </h2>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}>
-                      {s.body}
-                    </ReactMarkdown>
+                    <div className="mt-5 space-y-6">
+                      {s.body
+                        .split(/\n{2,}/)
+                        .filter(Boolean)
+                        .map((paragraph: string, index: number) => (
+                          <p
+                            key={index}
+                            className="text-[15px] leading-8 text-muted-foreground"
+                          >
+                            {paragraph.trim()}
+                          </p>
+                        ))}
+                    </div>
                   </section>
                 );
               })
