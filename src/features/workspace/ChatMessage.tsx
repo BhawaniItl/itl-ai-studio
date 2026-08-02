@@ -272,7 +272,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
                       size="sm"
                       className="h-7 gap-1.5 px-2 text-[11px] text-muted-foreground"
                     >
-                      <Download className="h-3 w-3" />
+                      {exporting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                       Export
                       <ChevronDown className="h-3 w-3" />
                     </Button>
@@ -280,15 +280,16 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
 
                   <DropdownMenuContent align="start">
 
-                    <DropdownMenuItem onClick={exportPdf}>
+                    <DropdownMenuItem onClick={exportPdf} disabled={exporting !== null}>
                       <FileArchive className="mr-2 h-4 w-4" />
                       Export as PDF
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={exportWord}>
+                    <DropdownMenuItem onClick={exportWord} disabled={exporting !== null}>
                       <FileText className="mr-2 h-4 w-4" />
                       Export as Word
                     </DropdownMenuItem>
+
 
                   </DropdownMenuContent>
                 </DropdownMenu>
