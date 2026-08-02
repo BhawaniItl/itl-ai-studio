@@ -90,8 +90,12 @@ export interface ChatMessage {
   /** Vendor did an extra deep-research pass for this answer. */
   deepResearchUsed?: boolean;
   /** Local-only lifecycle state for optimistic UI. Absent = already settled. */
-  status?: "pending" | "error";
-  /** Persisted server-side once submitted — "up" | "down" | undefined (not yet given). */
+  status?: "pending" | "error" | "processing";
+  /** Set when status is "processing" — the vendor job id to poll. */
+  jobId?: string;
+  /** Live progress (0-1) and stage label while status is "processing". */
+  progress?: number;
+  stage?: string;
   feedback?: "up" | "down";
 }
 

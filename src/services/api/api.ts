@@ -222,6 +222,8 @@ export const endpoints = {
     messageRefine: (id: string) => `/ai/messages/${id}/refine`,
     noticeGenerate: "/ai/notice/generate",
     summarize: "/ai/summarize",
+    summarizeStatus: (jobId: string) => `/ai/summarize/status/${jobId}`,
+    summarizeResult: (jobId: string) => `/ai/summarize/result/${jobId}`,
     analytics: "/ai/analytics",
     health: "/ai/health",
   },
