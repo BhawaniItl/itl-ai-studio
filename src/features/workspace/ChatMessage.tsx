@@ -100,75 +100,40 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
     }
   };
 
-  const exportPdf = async () => {
-    const { jsPDF } = await import("jspdf");
-    const pdf = new jsPDF();
-
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(18);
-    pdf.text("ITL AI", 20, 20);
-
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(11);
-
-    const lines = pdf.splitTextToSize(message.content, 170);
-
-    pdf.text(lines, 20, 35);
-
-    pdf.save(
-      `itl-ai-${new Date(message.createdAt)
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:T]/g, "-")}.pdf`
-    );
-
-    toast.success("PDF exported");
+  /**
+   * The prompt that produced this answer, read non-reactively at click time so
+   * the bubble never re-renders because of it.
+   */
+  const findQuestion = () => {
+    const thread = useChatStore.getState().threads.find((t) => t.id === threadId);
+    const messages = thread?.messages ?? [];
+    const idx = messages.findIndex((m) => m.id === message.id);
+    for (let i = (idx === -1 ? messages.length : idx) - 1; i >= 0; i -= 1) {
+      if (messages[i].role === "user") return messages[i].content;
+    }
+    return undefined;
   };
 
-  const exportWord = async () => {
-    const [{ Document, Packer, Paragraph, HeadingLevel, TextRun }, { saveAs }] =
-      await Promise.all([import("docx"), import("file-saver")]);
-
-    const doc = new Document({
-      sections: [
-        {
-          children: [
-            new Paragraph({
-              heading: HeadingLevel.HEADING_1,
-              children: [
-                new TextRun({
-                  text: "ITL AI",
-                  bold: true,
-                }),
-              ],
-            }),
-
-            new Paragraph(""),
-
-            ...message.content.split("\n").map(
-              (line) =>
-                new Paragraph({
-                  children: [new TextRun(line)],
-                })
-            ),
-          ],
-        },
-      ],
-    });
-
-    const blob = await Packer.toBlob(doc);
-
-    saveAs(
-
-      blob,
-      `itl-ai-${new Date(message.createdAt)
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:T]/g, "-")}.docx`
-    );
-
-    toast.success("Word exported");
+  const runExport = async (format: "pdf" | "docx") => {
+    if (exporting) return;
+    setExporting(format);
+    const toastId = toast.loading(`Preparing ${format === "pdf" ? "PDF" : "Word"} document…`);
+    try {
+      const { exportMessageAsPdf, exportMessageAsWord } = await import("@/utils/export");
+      const opts = { message, question: findQuestion() };
+      if (format === "pdf") await exportMessageAsPdf(opts);
+      else await exportMessageAsWord(opts);
+      toast.success(`${format === "pdf" ? "PDF" : "Word document"} downloaded`, { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error("Export failed. Please try again.", { id: toastId });
+    } finally {
+      setExporting(null);
+    }
   };
+
+  const exportPdf = () => runExport("pdf");
+  const exportWord = () => runExport("docx");
 
   return (
     <motion.div
