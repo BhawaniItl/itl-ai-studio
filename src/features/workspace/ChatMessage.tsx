@@ -60,6 +60,7 @@ export function ChatMessageBubble({ message, threadId }: { message: ChatMessage;
   const isClarification = !isUser && message.needsClarification;
   const [copied, setCopied] = useState(false);
   const [isRefineOpen, setIsRefineOpen] = useState(false);
+  const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
 
   // Optimistic/local-only messages (e.g. still in flight, or an error bubble)
   // don't have a real backend message id yet — feedback and refine both need
