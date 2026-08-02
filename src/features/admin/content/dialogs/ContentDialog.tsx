@@ -251,7 +251,7 @@ export function ContentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-[95vh] w-[95vw] max-w-none overflow-hidden">
+      <DialogContent className="h-[95vh] w-[95vw] max-w-none overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "view" ? "View Content" : mode === "edit" ? "Edit Content" : "Create Content"}
