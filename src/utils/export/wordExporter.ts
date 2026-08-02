@@ -363,6 +363,28 @@ export function buildDocx(docx: DocxModule, model: ExportDocument) {
     style: { paragraph: { indent: { left: 720 + level * 360, hanging: 360 } } },
   }));
 
+  const makeFooter = () =>
+    new Footer({
+      children: [
+        new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: TabStopPosition.MAX }],
+          border: { top: { style: BorderStyle.SINGLE, size: 4, color: RULE, space: 4 } },
+          children: [
+            new TextRun({
+              text: `${model.brand} \u2014 Income Tax Library AI`,
+              size: 16,
+              color: MUTED,
+              font: "Arial",
+            }),
+            new TextRun({ text: "\tPage ", size: 16, color: MUTED, font: "Arial" }),
+            new TextRun({ children: [PageNumber.CURRENT], size: 16, color: MUTED, font: "Arial" }),
+            new TextRun({ text: " of ", size: 16, color: MUTED, font: "Arial" }),
+            new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, color: MUTED, font: "Arial" }),
+          ],
+        }),
+      ],
+    });
+
   return new Document({
     creator: model.brand,
     title: `${model.brand} — ${model.subtitle ?? "Response"}`,
