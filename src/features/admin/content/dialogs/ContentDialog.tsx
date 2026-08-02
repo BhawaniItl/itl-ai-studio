@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -114,22 +114,72 @@ export function ContentDialog({
   const importMutation = useMutation({
       mutationFn: importContentDocument,
       onSuccess: (result) => {
-          form.setValue("title", result.title);
+          form.setValue(
+              "title",
+              result.title,
+          );
+
           form.setValue(
               "content_html",
               result.html_content,
           );
+
           form.setValue(
               "content_text",
               result.plain_text,
           );
-          toast.success("Document imported.");
+
+          setImportedDocument({
+              fileName: result.file_name,
+              fileType: result.file_type,
+              pageCount: result.page_count,
+              wordCount: result.word_count,
+          });
+
+          setContentSource("upload");
+
+          toast.success(
+              "Document imported successfully.",
+          );
       },
 
       onError: () => {
           toast.error("Unable to import document.");
       },
   });
+
+  const handleImport = (
+  event: React.ChangeEvent<HTMLInputElement>,
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) {
+    return;
+  }
+
+  // Optional validation
+  const allowedTypes = [
+    "application/pdf",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    toast.error("Only PDF and DOCX files are supported.");
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    toast.error("Maximum file size is 20 MB.");
+    event.target.value = "";
+    return;
+  }
+
+  importMutation.mutate(file);
+
+  // Allow selecting the same file again
+  event.target.value = "";
+};
 
   useEffect(() => {
     form.reset({
@@ -144,6 +194,12 @@ export function ContentDialog({
       content_html: currentContent?.content_html ?? currentContent?.body ?? "",
       content_text: currentContent?.content_text ?? "",
     });
+    setImportedDocument(null);
+    if (currentContent?.content_html) {
+        setContentSource("manual");
+    } else {
+        setContentSource(null);
+    }
   }, [bookId, currentContent, form, sectionId]);
 
   const mutation = useMutation({
@@ -182,9 +238,20 @@ export function ContentDialog({
 
   const isReadOnly = mode === "view";
 
+  const [contentSource, setContentSource] = useState<
+    "manual" | "upload" | null
+  >(null);
+
+  const [importedDocument, setImportedDocument] = useState<{
+    fileName: string;
+    fileType: string;
+    pageCount?: number;
+    wordCount: number;
+  } | null>(null);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="h-[95vh] w-[95vw] max-w-none overflow-hidden">
         <DialogHeader>
           <DialogTitle>
             {mode === "view" ? "View Content" : mode === "edit" ? "Edit Content" : "Create Content"}
@@ -330,40 +397,108 @@ export function ContentDialog({
                   <FormItem className="md:col-span-2">
                     <FormLabel>Body</FormLabel>
                     <FormControl>
-                      <div className="flex items-center gap-3">
-                        {!isReadOnly && (
-                          <Button type="button" variant="outline" disabled={importMutation.isPending} asChild>
-                            <label> Import PDF / DOCX
+                      <div className="space-y-3">
+                        {!isReadOnly && contentSource === null && (
+                          <div className="grid gap-4 md:grid-cols-2">
+                              <button
+                                  type="button"
+                                  onClick={() => setContentSource("manual")}
+                                  className="rounded-xl border p-6 text-left transition hover:border-primary hover:bg-muted/40"
+                              >
+                                  <h3 className="font-semibold">
+                                      📝 Write Manually
+                                  </h3>
+                                  <p className="mt-2 text-sm text-muted-foreground">
+                                      Create and edit content using the rich text editor.
+                                  </p>
+                              </button>
+                              <button
+                                  type="button"
+                                  onClick={() => setContentSource("upload")}
+                                  className="rounded-xl border p-6 text-left transition hover:border-primary hover:bg-muted/40"
+                              >
+                                  <h3 className="font-semibold">
+                                      📄 Import PDF / Word
+                                  </h3>
+                                  <p className="mt-2 text-sm text-muted-foreground">
+                                      Upload a document and convert it into editable content.
+                                  </p>
+                              </button>
+                          </div>
+                          )}
+                          {contentSource === "upload" && !importedDocument && (
+                            <div className="rounded-xl border-2 border-dashed p-10 text-center">
                                 <input
+                                    id="content-import"
                                     hidden
                                     type="file"
                                     accept=".pdf,.docx"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                            importMutation.mutate(file);
-                                        }
-                                        e.target.value = "";
-                                    }}
+                                    onChange={handleImport}
                                 />
-                            </label>
-                        </Button>
-                        )}
-                        {importMutation.isPending && (
-                                <div className="absolute inset-0 z-10 flex items-center justify-center -background/70">
-                                    Parsing document...
+                                <p className="text-lg font-semibold">
+                                    Drag & Drop PDF or DOCX
+                                </p>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    or
+                                </p>
+                                <Button
+                                    className="mt-4"
+                                    type="button"
+                                    onClick={() =>
+                                        document
+                                            .getElementById("content-import")
+                                            ?.click()
+                                    }
+                                >
+                                    Browse Files
+                                </Button>
+                                <p className="mt-4 text-xs text-muted-foreground">
+                                    Supported: PDF, DOCX • Max 20 MB
+                                </p>
+                            </div>
+                          )}
+                          {importedDocument && (
+                            <div className="rounded-lg border bg-green-50 p-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="font-medium">
+                                            ✓ {importedDocument.fileName}
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {importedDocument.fileType.toUpperCase()}
+                                            {importedDocument.pageCount
+                                                ? ` • ${importedDocument.pageCount} pages`
+                                                : ""}
+                                            {` • ${importedDocument.wordCount.toLocaleString()} words`}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => {
+                                            setImportedDocument(null);
+                                            document
+                                                .getElementById("content-import")
+                                                ?.click();
+                                        }}
+                                    >
+                                        Replace
+                                    </Button>
                                 </div>
-                            )}
+                            </div>
+                          )}
+                          {(contentSource === "manual" || importedDocument) && (
+                            <RichTextEditor
+                              content={field.value ?? ""}
+                              onChange={(html, text) => {
+                                field.onChange(html);
+                                form.setValue("content_text", text, {
+                                  shouldDirty: true,
+                                });
+                              }}
+                            />
+                         )}
                       </div>
-                      <RichTextEditor
-                        content={field.value ?? ""}
-                        onChange={(html, text) => {
-                          field.onChange(html);
-                          form.setValue("content_text", text, {
-                            shouldDirty: true,
-                          });
-                        }}
-                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -376,7 +511,7 @@ export function ContentDialog({
                 {isReadOnly ? "Close" : "Cancel"}
               </Button>
               {!isReadOnly && (
-                <Button type="submit" disabled={mutation.isPending || importMutation.isPending}>
+                <Button type="submit" disabled={mutation.isPending || importMutation.isPending || contentSource === null}>
                   {mutation.isPending
                     ? "Saving..."
                     : mode === "edit"
